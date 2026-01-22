@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import { insertDataSourceSchema, insertDashboardSchema, insertWidgetSchema } from "@shared/schema";
+import { z } from "zod";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import * as XLSX from "xlsx";
@@ -825,6 +826,72 @@ Respond in JSON format:
     } catch (error) {
       console.error("Error removing member:", error);
       res.status(500).json({ error: "Failed to remove member" });
+    }
+  });
+
+  // Smart Assistant Chat API
+  const assistantChatSchema = z.object({
+    message: z.string().min(1).max(2000),
+    context: z.object({
+      dashboardId: z.number().optional(),
+      dataSourceCount: z.number().optional(),
+      widgetCount: z.number().optional(),
+      dataSources: z.array(z.object({
+        name: z.string(),
+        type: z.string(),
+        status: z.string(),
+        rowCount: z.number().optional(),
+        columns: z.array(z.string()).optional(),
+      })).optional(),
+      widgets: z.array(z.object({
+        title: z.string(),
+        type: z.string(),
+      })).optional(),
+    }).optional(),
+  });
+
+  app.post("/api/assistant/chat", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+      const parseResult = assistantChatSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+      }
+
+      const { message, context } = parseResult.data;
+
+      const systemPrompt = `You are a helpful dashboard analytics assistant for DashGen. You help users understand their data, provide insights about their dashboards, and answer questions about charts and visualizations.
+
+Current context:
+- Dashboard ID: ${context?.dashboardId || "Not specified"}
+- Number of data sources: ${context?.dataSourceCount || 0}
+- Number of widgets: ${context?.widgetCount || 0}
+
+Available data sources:
+${context?.dataSources?.map((ds: any) => `- ${ds.name} (${ds.type}, ${ds.status}): ${ds.rowCount || "?"} rows, columns: ${ds.columns?.join(", ") || "unknown"}`).join("\n") || "No data sources"}
+
+Widgets on dashboard:
+${context?.widgets?.map((w: any) => `- ${w.title} (${w.type} chart)`).join("\n") || "No widgets"}
+
+Be concise, helpful, and provide actionable insights when possible. If asked about specific data, explain what patterns or trends might be interesting to explore.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message },
+        ],
+        max_completion_tokens: 500,
+      });
+
+      const assistantResponse = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response.";
+
+      res.json({ response: assistantResponse });
+    } catch (error) {
+      console.error("Error in assistant chat:", error);
+      res.status(500).json({ error: "Failed to process chat message" });
     }
   });
 

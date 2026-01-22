@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { motion } from "framer-motion";
 import { DashboardGrid } from "@/components/dashboard-grid";
-import { WidgetCreator } from "@/components/widget-creator";
+import { VisualWidgetBuilder } from "@/components/visual-widget-builder";
+import { KpiCards } from "@/components/kpi-cards";
+import { SmartAssistant } from "@/components/smart-assistant";
+import { TemplateGallery, type DashboardTemplate } from "@/components/template-gallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,17 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, ArrowLeft, Copy, Check } from "lucide-react";
+import { Loader2, ArrowLeft, Copy, Check, Wand2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { fadeInUp, staggerContainer, smoothTransition } from "@/lib/animations";
 import type { Dashboard, Widget, DataSource } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -31,6 +29,9 @@ export default function DashboardViewPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showWidgetCreator, setShowWidgetCreator] = useState(false);
+  const [showVisualBuilder, setShowVisualBuilder] = useState(false);
+  
+  // Combined state for the widget creation dialog
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -80,6 +81,7 @@ export default function DashboardViewPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboards", id, "widgets"] });
       setShowWidgetCreator(false);
+      setShowVisualBuilder(false);
       toast({
         title: "Widget created",
         description: "Your new widget has been added to the dashboard.",
@@ -115,6 +117,13 @@ export default function DashboardViewPage() {
     },
   });
 
+  const handleTemplateSelect = async (template: DashboardTemplate) => {
+    toast({
+      title: "Template applied",
+      description: `${template.name} template structure will be used for new widgets.`,
+    });
+  };
+
   const shareUrl = dashboard?.shareToken
     ? `${window.location.origin}/share/${dashboard.shareToken}`
     : null;
@@ -149,44 +158,95 @@ export default function DashboardViewPage() {
     );
   }
 
+  const readyDataSources = dataSources?.filter((s) => s.status === "ready") || [];
+
   return (
-    <div className="p-6">
-      <div className="mb-4">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+      className="p-6"
+    >
+      <motion.div variants={fadeInUp} transition={smoothTransition} className="mb-4 flex items-center justify-between">
         <Link href="/">
           <Button variant="ghost" size="sm" data-testid="button-back-to-dashboards">
             <ArrowLeft className="h-4 w-4 mr-2" />
             All Dashboards
           </Button>
         </Link>
-      </div>
+        <div className="flex items-center gap-2">
+          <TemplateGallery onSelectTemplate={handleTemplateSelect} />
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setShowVisualBuilder(true)}
+            data-testid="button-visual-builder"
+          >
+            <Wand2 className="h-4 w-4" />
+            Visual Builder
+          </Button>
+        </div>
+      </motion.div>
 
-      <DashboardGrid
-        dashboard={dashboard}
+      {readyDataSources.length > 0 && (
+        <motion.div variants={fadeInUp} transition={{ ...smoothTransition, delay: 0.1 }} className="mb-6">
+          <KpiCards dataSources={readyDataSources} />
+        </motion.div>
+      )}
+
+      <motion.div variants={fadeInUp} transition={{ ...smoothTransition, delay: 0.2 }}>
+        <DashboardGrid
+          dashboard={dashboard}
+          widgets={widgets || []}
+          isLoading={widgetsLoading}
+          onAddWidget={() => setShowWidgetCreator(true)}
+          onDeleteWidget={(widgetId) => deleteWidgetMutation.mutate(widgetId)}
+          onShareDashboard={() => setShowShareDialog(true)}
+          onGenerateInsights={() => generateInsightsMutation.mutate()}
+        />
+      </motion.div>
+
+      <SmartAssistant
+        dashboardId={dashboard.id}
+        dataSources={dataSources || []}
         widgets={widgets || []}
-        isLoading={widgetsLoading}
-        onAddWidget={() => setShowWidgetCreator(true)}
-        onDeleteWidget={(widgetId) => deleteWidgetMutation.mutate(widgetId)}
-        onShareDashboard={() => setShowShareDialog(true)}
-        onGenerateInsights={() => generateInsightsMutation.mutate()}
       />
 
-      <Sheet open={showWidgetCreator} onOpenChange={setShowWidgetCreator}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Add Widget</SheetTitle>
-            <SheetDescription>
-              Choose a chart type and configure your widget.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            <WidgetCreator
-              dataSources={dataSources?.filter((s) => s.status === "ready") || []}
-              onCreateWidget={(data) => createWidgetMutation.mutate(data)}
-              onCancel={() => setShowWidgetCreator(false)}
-            />
+      <Dialog open={showWidgetCreator || showVisualBuilder} onOpenChange={(open) => {
+        setShowWidgetCreator(false);
+        setShowVisualBuilder(open);
+      }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" data-testid="dialog-widget-builder">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" data-testid="title-widget-builder">
+              <Wand2 className="h-5 w-5" />
+              Visual Widget Builder
+            </DialogTitle>
+            <DialogDescription data-testid="description-widget-builder">
+              Build charts visually with live preview
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {readyDataSources.length > 0 ? (
+              <VisualWidgetBuilder
+                dataSources={readyDataSources}
+                onCreateWidget={(data) => createWidgetMutation.mutate(data)}
+                onCancel={() => {
+                  setShowWidgetCreator(false);
+                  setShowVisualBuilder(false);
+                }}
+              />
+            ) : (
+              <div className="text-center py-8" data-testid="empty-data-sources">
+                <p className="text-muted-foreground mb-4">No data sources available. Upload data first to create widgets.</p>
+                <Link href="/upload">
+                  <Button data-testid="button-upload-data">Upload Data</Button>
+                </Link>
+              </div>
+            )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent>
@@ -212,6 +272,6 @@ export default function DashboardViewPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
