@@ -1,0 +1,142 @@
+═══════════════════════════════════════════════════════════════
+  DISCOVERY-FIRST PROTOCOL — QUICK REFERENCE CARD
+═══════════════════════════════════════════════════════════════
+
+COPY-PASTE THIS WHEN ASKING FOR AUDITS/RECOMMENDATIONS:
+
+───────────────────────────────────────────────────────────────
+📋 MY CONTEXT (Fill this out first):
+
+1. WHAT I'M BUILDING:
+   [ ] Personal tool
+   [ ] Team tool  
+   [ ] Product to sell
+   [ ] Learning material
+   [ ] Other: ___________
+
+2. END USER:
+   [ ] Just me
+   [ ] My team (2-10)
+   [ ] My company (10-100+)
+   [ ] External customers
+   [ ] Students/learners
+
+3. MY GOAL:
+   (1-2 sentences: What problem am I solving?)
+   
+   
+
+4. TIMELINE:
+   [ ] 1-2 days
+   [ ] 1-2 weeks
+   [ ] 1-2 months
+   [ ] Ongoing/no rush
+
+5. BUDGET:
+   [ ] $0 (free only)
+   [ ] <$100/month
+   [ ] $100-1000/month
+   [ ] $1000+/month
+   [ ] Unlimited
+
+6. CURRENT STAGE:
+   [ ] Idea (nothing built)
+   [ ] Prototype (rough version)
+   [ ] MVP (working but incomplete)
+   [ ] Production (live)
+   [ ] Scaling
+
+7. QUALITY NEEDED:
+   [ ] SPIKE (quick prototype)
+   [ ] MVP (works but not polished)
+   [ ] PROD (production-ready)
+   [ ] SKEPTIC (mission-critical)
+
+───────────────────────────────────────────────────────────────
+PASTE THIS INTO YOUR REQUEST:
+
+"Before you analyze, here's my context:
+[Paste your answers from above]
+
+Now please:
+1. Flag any critical blockers
+2. Give me tiered options (quick/medium/complete)
+3. Recommend which tier fits my situation
+4. Show effort vs impact for each option"
+
+───────────────────────────────────────────────────────────────
+WHAT TO EXPECT BACK:
+
+✅ Critical Dependencies Check
+   "🔴 This won't work without X because..."
+
+✅ Quick Wins (80/20)
+   "These 3 things take 4 hours, give 80% of value"
+
+✅ Tiered Options
+   Tier 1: Ship in X days (Y hours)
+   Tier 2: Ship in X weeks (Y hours)
+   Tier 3: Ship in X months (Y hours)
+
+✅ Concrete Recommendation
+   "Do Tier X because [fits your goals/constraints]"
+
+✅ Next Steps
+   "Option A: Do X - Takes Y - Gets Z"
+   "Which do you choose?"
+
+───────────────────────────────────────────────────────────────
+RED FLAGS TO WATCH FOR:
+
+🚩 If answer jumps to solution without asking questions
+🚩 If answer gives only ONE recommendation
+🚩 If answer optimizes for "industry standard" not YOUR needs
+🚩 If answer doesn't flag critical dependencies
+🚩 If answer says "build everything before shipping"
+🚩 If answer doesn't show effort estimates
+🚩 If answer is all criticism, no acknowledgment of what's good
+
+If you see these, STOP and say:
+"Please use discovery-first protocol - ask about my goals first"
+
+───────────────────────────────────────────────────────────────
+EXAMPLE GOOD RESPONSE:
+
+"Got it. You're building [SUMMARY]:
+- For: [WHO]
+- Goal: [WHAT]
+- Timeline: [WHEN]
+- Budget: [HOW MUCH]
+
+🔴 CRITICAL: You need X or this won't work
+   Fix: [Solution] - Takes [Time]
+
+Quick Wins (4 hours → 80% value):
+1. Add templates (1h) - 10x easier to use
+2. Add mistakes section (2h) - Prevent errors  
+3. Add decision tree (1h) - Help users choose
+
+Tier 1: Ship Monday (4 hours)
+Tier 2: Ship in 2 weeks (24 hours)
+Tier 3: Ship in 2 months (100 hours)
+
+My recommendation: Tier 2 because you said [REASON].
+
+Next steps:
+A) Do Tier 1 now - Learn fast
+B) Do Tier 2 now - More complete
+
+Which do you prefer?"
+
+───────────────────────────────────────────────────────────────
+KEEP THIS HANDY — USE EVERY TIME YOU ASK FOR:
+
+• Audits
+• Reviews  
+• "What's missing?"
+• "How should I build X?"
+• Recommendations
+• Architecture decisions
+• Any request >20 hours of work
+
+═══════════════════════════════════════════════════════════════
