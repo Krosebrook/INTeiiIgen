@@ -91,5 +91,13 @@ npm run dev        # Start development server (port 5000)
 npm run db:push    # Push schema changes to database
 ```
 
+## Documentation
+See `DOCS.md` for complete documentation including:
+- Architecture diagrams and tech stack details
+- API endpoint reference with examples
+- User flows and component documentation
+- Security, testing, and deployment guides
+- Troubleshooting and style guide
+
 ## Recent Changes
 - January 2026: Initial implementation with full multi-tenant schema, file upload, cloud connectors, chart widgets, and AI insights integration
