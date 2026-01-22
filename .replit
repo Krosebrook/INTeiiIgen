@@ -40,3 +40,10 @@ waitForPort = 5000
 
 [agent]
 integrations = ["google-drive:1.0.0", "notion:1.0.0", "onedrive:1.0.0", "javascript_log_in_with_replit:2.0.0", "javascript_database:1.0.0", "javascript_openai_ai_integrations:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+UPSTASH_REST_API_TOKEN = "AUUHAAIncDJmM2ZlMTUwMjA2YTg0MzA0YTQ4MmEyY2E1NTQ5MjU1NnAyMTc2NzE"
+reCAPTCHA_SITE_KEY = "6LfcBgwsAAAAAPQ8Tv0b7pzBupBW60eg4u7PUZ9o"
+HCaptcha_SITE_KEY = "e09264cc-86c0-413c-a6f6-8d629ed671c0"
