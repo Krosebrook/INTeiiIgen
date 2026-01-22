@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
 import Landing from "@/pages/landing";
+import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import Upload from "@/pages/upload";
 import CloudPage from "@/pages/cloud";
@@ -84,6 +85,10 @@ function Router() {
   }
 
   if (!user) {
+    // Show auth page for /auth route, landing for everything else
+    if (location === "/auth" || location === "/signup" || location === "/login") {
+      return <AuthPage />;
+    }
     return <Landing />;
   }
 

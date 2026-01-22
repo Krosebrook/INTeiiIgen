@@ -59,12 +59,12 @@ export default function Landing() {
           </motion.div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <a href="/api/login">
+            <a href="/auth">
               <Button variant="outline" data-testid="button-login">
                 Log In
               </Button>
             </a>
-            <a href="/api/login">
+            <a href="/auth">
               <Button data-testid="button-get-started">
                 Get Started
               </Button>
@@ -109,7 +109,7 @@ export default function Landing() {
               transition={{ ...smoothTransition, delay: 0.25 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <a href="/api/login">
+              <a href="/auth">
                 <Button size="lg" className="w-full sm:w-auto" data-testid="button-hero-cta">
                   <Sparkles className="h-4 w-4 mr-2" />
                   Start Building Free
@@ -194,7 +194,7 @@ export default function Landing() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <a href="/api/login">
+              <a href="/auth">
                 <Button size="lg" data-testid="button-footer-cta">
                   Create Your First Dashboard
                 </Button>
