@@ -9,6 +9,7 @@ import {
   BarChart3,
   Sparkles,
   FolderOpen,
+  Building2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -64,6 +65,11 @@ const toolsNavItems = [
     title: "Analytics",
     url: "/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Organizations",
+    url: "/organizations",
+    icon: Building2,
   },
 ];
 

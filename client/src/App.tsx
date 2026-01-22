@@ -18,6 +18,8 @@ import DataSources from "@/pages/data-sources";
 import NewDashboard from "@/pages/new-dashboard";
 import DashboardView from "@/pages/dashboard-view";
 import InsightsPage from "@/pages/insights";
+import SharedDashboard from "@/pages/shared-dashboard";
+import OrganizationsPage from "@/pages/organizations";
 import NotFound from "@/pages/not-found";
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
@@ -57,6 +59,7 @@ function AuthenticatedRouter() {
         <Route path="/insights" component={InsightsPage} />
         <Route path="/reports" component={InsightsPage} />
         <Route path="/analytics" component={InsightsPage} />
+        <Route path="/organizations" component={OrganizationsPage} />
         <Route component={NotFound} />
       </Switch>
     </AuthenticatedLayout>
@@ -65,6 +68,12 @@ function AuthenticatedRouter() {
 
 function Router() {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  // Public share route - doesn't require authentication
+  if (location.startsWith("/share/")) {
+    return <SharedDashboard />;
+  }
 
   if (isLoading) {
     return (

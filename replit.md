@@ -54,14 +54,30 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 - **ai_analyses**: AI-generated insights
 
 ## API Endpoints
+
+### Data Sources
 - `GET/POST /api/data-sources` - Data source CRUD
-- `POST /api/upload` - File upload (CSV, JSON, images, documents)
+- `POST /api/upload` - File upload (CSV, JSON, Excel)
 - `POST /api/data-sources/url` - URL import
 - `POST /api/data-sources/cloud` - Cloud storage import
+
+### Dashboards
 - `GET/POST /api/dashboards` - Dashboard CRUD
+- `PATCH /api/dashboards/:id` - Update dashboard (including isPublic, shareToken)
 - `GET/POST/PATCH/DELETE /api/widgets` - Widget CRUD
-- `GET /api/ai-analyses` - AI analysis results
-- `GET /api/cloud/:provider/files` - Cloud file listing
+- `GET /api/share/:token` - Public dashboard view (no auth)
+
+### AI & Analytics
+- `GET /api/ai-analyses` - AI analysis results (OpenAI GPT-4.1-mini)
+- `POST /api/analyze/:sourceId` - Trigger AI analysis of data source
+
+### Cloud Storage
+- `GET /api/cloud/:provider/files` - List files from Google Drive, OneDrive, Notion
+
+### Organizations
+- `GET/POST /api/organizations` - List/create organizations
+- `GET/PATCH/DELETE /api/organizations/:id` - Organization CRUD
+- `GET/POST/PATCH/DELETE /api/organizations/:id/members` - Member management
 
 ## Security
 - All routes use `isAuthenticated` middleware
