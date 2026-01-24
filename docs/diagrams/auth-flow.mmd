@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant U as User Browser
+    participant F as React Frontend
+    participant A as Express API
+    participant R as Replit Auth
+    participant DB as PostgreSQL
+
+    U->>F: Click "Login"
+    F->>R: Redirect to Replit Auth
+    R->>R: User authenticates
+    R->>F: Redirect with session cookie
+    F->>A: API request with cookie
+    A->>A: isAuthenticated middleware
+    A->>A: Extract claims.sub (userId)
+    A->>DB: Query user data
+    DB->>A: Return data
+    A->>F: JSON response
+    F->>U: Render dashboard
