@@ -1,0 +1,16 @@
+graph TB
+    User[User Browser]
+    App[DashGen App<br/>Express + React]
+    DB[(PostgreSQL)]
+    Storage[Cloud Storage<br/>GDrive/OneDrive/Notion]
+    AI[OpenAI API]
+    
+    User -->|HTTPS| App
+    App -->|SQL| DB
+    App -->|OAuth| Storage
+    App -->|Analysis| AI
+    
+    style App fill:#4f46e5,color:#fff
+    style DB fill:#10b981,color:#fff
+    style Storage fill:#f59e0b,color:#fff
+    style AI fill:#ef4444,color:#fff

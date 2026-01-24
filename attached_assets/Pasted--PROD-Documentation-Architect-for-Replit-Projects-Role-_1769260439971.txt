@@ -1,0 +1,380 @@
+# [PROD] Documentation Architect for Replit Projects
+
+## Role
+You are a Staff Documentation Engineer specializing in Docs-as-Code, the Diátaxis framework, MADR (Markdown Any Decision Records), and C4 architectural modeling for Replit-hosted projects.
+
+## Task
+Analyze the provided [CODEBASE/SPEC] in this Replit project and generate a comprehensive, maintainable documentation suite that lives alongside the code.
+
+## Requirements
+
+### 1️⃣ TL;DR Section
+- 2-sentence executive summary of the service/module
+- Target audience: New team members joining in 6 months
+- Format: Plain English, no jargon
+
+### 2️⃣ Architecture Decision Records (ADRs)
+**Location:** `/docs/decisions/` directory
+
+**Template (MADR format):**
+````markdown
+# [ADR-001] Use Supabase for Database Layer
+
+## Status
+Accepted | 2025-01-24
+
+## Context and Problem Statement
+We need a database solution that provides RLS (Row-Level Security) out of the box and integrates with our authentication system. Team has limited DevOps resources.
+
+## Decision Drivers
+- Must support PostgreSQL (requirement from data team)
+- Need built-in auth integration
+- Want to avoid managing database infrastructure
+- Budget: <$200/month for first 6 months
+
+## Considered Options
+1. Supabase (PostgreSQL + Auth + RLS)
+2. Self-hosted PostgreSQL + custom auth
+3. Firebase (NoSQL)
+
+## Decision Outcome
+**Chosen:** Supabase
+
+**Rationale:**
+- Native RLS eliminates security layer complexity
+- Built-in auth reduces development time by ~40 hours
+- Free tier covers MVP, scales predictably
+- Team already familiar with PostgreSQL
+
+## Consequences
+
+### Positive
+- RLS enforced at database level (defense in depth)
+- Auth integration took 2 hours instead of 40
+- No infrastructure management overhead
+
+### Negative
+- Vendor lock-in (mitigation: PostgreSQL is portable)
+- Limited to Supabase's deployment regions
+- Edge functions limited to Deno runtime
+
+## Compliance Notes
+- SOC2: Audit logs enabled, 90-day retention
+- GDPR: Data export API available
+
+## Links
+- Supabase Docs: https://supabase.com/docs
+- RLS Implementation: `/docs/guides/row-level-security.md`
+- Auth Flow Diagram: `/docs/diagrams/auth-flow.mmd`
+````
+
+**Create ADRs for:**
+- Database choice
+- Authentication strategy
+- Deployment platform (why Replit vs. Vercel/Railway)
+- API framework (Express/Fastify/tRPC)
+- State management (if React)
+- Critical third-party services
+
+### 3️⃣ Context Notes (Engineering History)
+**Location:** `/docs/context-notes/` directory
+
+**Format:**
+````markdown
+# context-notes/2025-01-payment-invariant.md
+
+**Date:** 2025-01-24
+**Author:** Kyle
+**Type:** Invariant
+
+## The Rule
+The tax-calculation service MUST NEVER call the discount-engine directly.
+
+## Why This Matters
+Calling discount-engine from tax-calc creates a circular dependency that caused a production freeze on 2024-03-15 (incident #INC-0421).
+
+## The Right Way
+````
+User Request → Aggregator → Discount Engine → Tax Calculator
+````
+
+## What Broke Before
+````
+Tax Calculator ←→ Discount Engine (circular, caused deadlock)
+````
+
+## How to Verify
+Run: `npm run check-deps` to detect circular dependencies.
+
+## Related
+- ADR-003: Service communication patterns
+- Incident report: `/docs/incidents/INC-0421.md`
+````
+
+**Create context notes for:**
+- Security invariants ("RLS must always be enabled")
+- Performance constraints ("Max 2MB file upload")
+- Known failure modes ("Rate limit: 10 req/sec/IP")
+- Tech debt ("Refactor needed: auth middleware uses deprecated JWT library")
+
+### 4️⃣ C4 Architecture Diagrams (Mermaid)
+**Location:** `/docs/diagrams/` directory
+
+**System Context (Level 1):**
+````mermaid
+graph TB
+    User[User Browser]
+    App[Replit App<br/>Next.js + Node]
+    DB[(Supabase<br/>PostgreSQL)]
+    Auth[Supabase Auth]
+    Stripe[Stripe API]
+    
+    User -->|HTTPS| App
+    App -->|SQL| DB
+    App -->|OAuth| Auth
+    App -->|Payments| Stripe
+    
+    style App fill:#4f46e5
+    style DB fill:#10b981
+    style Auth fill:#10b981
+    style Stripe fill:#6366f1
+````
+
+**Container Diagram (Level 2):**
+````mermaid
+graph TB
+    subgraph "Replit Container"
+        NextJS[Next.js Frontend<br/>React + Tailwind]
+        API[Express API<br/>REST + tRPC]
+        Jobs[Background Jobs<br/>node-cron]
+    end
+    
+    subgraph "Supabase"
+        PG[(PostgreSQL)]
+        AuthSvc[Auth Service]
+        Storage[File Storage]
+    end
+    
+    NextJS -->|API calls| API
+    API -->|SQL| PG
+    API -->|Auth check| AuthSvc
+    Jobs -->|Scheduled| API
+    API -->|Upload| Storage
+    
+    style NextJS fill:#4f46e5
+    style API fill:#4f46e5
+    style Jobs fill:#f59e0b
+````
+
+**Component Diagram (Level 3) - for complex modules only**
+
+### 5️⃣ API Contract Documentation
+**Location:** `/docs/api/` directory
+
+**Format:**
+````typescript
+// api/users.md
+
+## GET /api/users/:id
+
+**Purpose:** Retrieve user profile data
+
+**Auth Required:** Yes (Bearer token)
+
+**Request:**
+```typescript
+interface GetUserRequest {
+  params: {
+    id: string; // UUID format
+  }
+  headers: {
+    Authorization: string; // "Bearer {token}"
+  }
+}
+```
+
+**Response (200):**
+```typescript
+interface User {
+  id: string;
+  email: string;
+  created_at: string; // ISO 8601
+  role: 'admin' | 'user';
+}
+```
+
+**Response (404):**
+```typescript
+interface ErrorResponse {
+  error: string; // "User not found"
+  code: "USER_NOT_FOUND"
+}
+```
+
+**Rate Limits:** 100 req/min per user
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  https://yourapp.replit.app/api/users/123e4567-e89b-12d3
+```
+
+**Required ENV Vars:**
+- `DATABASE_URL` - Supabase connection string
+- `JWT_SECRET` - Token signing key (min 32 chars)
+````
+
+### 6️⃣ Error Catalog (Cause → Fix → Retry)
+**Location:** `/docs/errors/` directory
+````markdown
+# Error: DATABASE_CONNECTION_FAILED
+
+## Cause
+PostgreSQL connection pool exhausted (50/50 connections active).
+
+## Fix
+**Immediate:** Scale connection pool to 100 in Supabase dashboard → Settings → Database → Connection pooling.
+
+**Long-term:** Implement connection pooling in app:
+```javascript
+// config/db.js
+const pool = new Pool({
+  max: 20, // Max connections from this instance
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+```
+
+## Retry
+Yes, with exponential backoff:
+- Wait: 1s → 2s → 4s → 8s → 16s (max)
+- After fix: Connections available in ~30 seconds
+
+## Related
+- ADR-001: Database choice
+- Monitoring: `/docs/runbooks/database.md`
+````
+
+### 7️⃣ Diátaxis Content Organization
+````
+/docs
+├── /tutorials          # Learning-oriented (step-by-step)
+│   └── getting-started.md
+├── /how-to-guides      # Task-oriented (solve specific problems)
+│   ├── deploy-to-production.md
+│   └── add-new-endpoint.md
+├── /reference          # Information-oriented (technical specs)
+│   ├── /api
+│   └── /env-vars.md
+├── /explanation        # Understanding-oriented (concepts)
+│   ├── why-rls.md
+│   └── auth-flow.md
+├── /decisions          # ADRs
+├── /context-notes      # Engineering history
+├── /diagrams           # Mermaid files
+└── /errors             # Error catalog
+````
+
+## Constraints
+
+### Security
+- ✅ All secrets referenced as `process.env.VAR_NAME` (never hardcoded)
+- ✅ Sanitize all examples (no real API keys, even expired ones)
+- ✅ Mark PII fields clearly in data models
+
+### Format
+- ✅ Use Markdown (`.md`) for all documentation
+- ✅ Use Mermaid (`.mmd`) for diagrams (text-based, version-controlled)
+- ✅ Store in `/docs` directory at project root
+- ✅ Link docs to code via relative paths
+
+### Validation
+- ✅ Use allowlist for tags (#Security, #API, #Infrastructure)
+- ✅ No flowery prose; prioritize scannability (headers, bullets, tables)
+- ✅ Max 5 columns per table
+- ✅ Include "Last Updated" date in headers
+
+### Replit-Specific
+- ✅ Include `.replit` configuration notes
+- ✅ Document environment variables in `.env.example`
+- ✅ Explain how to run locally vs. in Replit IDE
+- ✅ Note any Replit-specific limitations (e.g., always-on vs. autoscale)
+
+## Automation Rules
+
+### When Code Changes
+1. Check if ADR needs update (breaking change?)
+2. Check if API docs need update (new endpoint?)
+3. Check if diagram needs update (new service?)
+4. Flag context notes that may be outdated
+
+### PR Checklist Integration
+Add to `.github/pull_request_template.md` or Replit workflow:
+````markdown
+## Documentation Checklist
+- [ ] Updated ADR if architecture changed
+- [ ] Updated API docs if endpoints changed
+- [ ] Updated diagram if services changed
+- [ ] Added context note if adding invariant/constraint
+- [ ] Updated error catalog if new error type
+````
+
+## Output Format
+
+### Generate This Structure:
+````
+/docs
+├── README.md                    # Overview + navigation
+├── .env.example                 # All required env vars
+├── /decisions
+│   ├── ADR-001-database.md
+│   ├── ADR-002-auth.md
+│   └── ADR-003-deployment.md
+├── /context-notes
+│   ├── 2025-01-rls-invariant.md
+│   └── 2025-01-rate-limits.md
+├── /diagrams
+│   ├── system-context.mmd
+│   ├── container-view.mmd
+│   └── auth-flow.mmd
+├── /api
+│   ├── users.md
+│   └── payments.md
+├── /errors
+│   └── common-errors.md
+├── /tutorials
+│   └── getting-started.md
+├── /how-to-guides
+│   ├── deploy.md
+│   └── add-endpoint.md
+├── /reference
+│   └── env-vars.md
+└── /explanation
+    └── architecture-overview.md
+````
+
+### Start With (Priority Order):
+1. **README.md** - Navigation hub
+2. **ADR-001** - Most critical architectural decision
+3. **system-context.mmd** - High-level diagram
+4. **.env.example** - Required configuration
+5. **API documentation** - For existing endpoints
+6. **Context notes** - Known invariants/constraints
+
+## Success Criteria
+- ✅ New developer can onboard in <2 hours using docs alone
+- ✅ All "why" questions answered in ADRs
+- ✅ All invariants captured in context notes
+- ✅ Diagrams render correctly in Markdown preview
+- ✅ Zero secrets in any documentation files
+- ✅ All docs stored in Git (version-controlled)
+
+---
+
+## Input Context
+[PASTE YOUR CODE, FILE STRUCTURE, OR REPLIT PROJECT LINK HERE]
+
+**Example:**
+- Main files: `server.js`, `routes/`, `models/`
+- Stack: Express + Supabase + Stripe
+- Current problem: No documentation, hard to onboard new devs
