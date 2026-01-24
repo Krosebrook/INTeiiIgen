@@ -99,5 +99,17 @@ See `DOCS.md` for complete documentation including:
 - Security, testing, and deployment guides
 - Troubleshooting and style guide
 
+## PWA Support
+- Progressive Web App with manifest.json and service worker
+- Cache-first strategy for static assets, network-first for API calls
+- Offline banner with retry functionality
+- LocalStorage draft recovery for interrupted uploads
+
+## API Endpoints
+
+### Health & Monitoring
+- `GET /api/health` - Health check endpoint for monitoring
+
 ## Recent Changes
+- January 2026: Added PWA support with service worker, offline detection, lazy loading, upload progress tracking with XHR timeout protection, and draft recovery
 - January 2026: Initial implementation with full multi-tenant schema, file upload, cloud connectors, chart widgets, and AI insights integration
