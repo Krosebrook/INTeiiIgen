@@ -111,5 +111,6 @@ See `DOCS.md` for complete documentation including:
 - `GET /api/health` - Health check endpoint for monitoring
 
 ## Recent Changes
+- January 2026: Added Dashboard Creator Studio (/studio, /studio/:id) for visually building and editing dashboards with widget templates
 - January 2026: Added PWA support with service worker, offline detection, lazy loading, upload progress tracking with XHR timeout protection, and draft recovery
 - January 2026: Initial implementation with full multi-tenant schema, file upload, cloud connectors, chart widgets, and AI insights integration
