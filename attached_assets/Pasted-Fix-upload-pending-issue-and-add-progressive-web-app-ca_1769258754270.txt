@@ -1,0 +1,177 @@
+Fix upload "pending" issue and add progressive web app capabilities:
+
+## 1. FIX UPLOAD PENDING ISSUE (Priority 1)
+
+**Debug checklist:**
+- [ ] Add console.log at upload start/progress/complete
+- [ ] Check if upload event listeners are attached
+- [ ] Verify FormData is constructed correctly
+- [ ] Add timeout handler (30s max)
+- [ ] Check for missing error callbacks
+- [ ] Verify API endpoint responds with status updates
+- [ ] Add upload progress tracking (0-100%)
+
+**Required changes:**
+```javascript
+// Add upload state management
+const [uploadStatus, setUploadStatus] = useState('idle'); // idle|uploading|success|error
+
+// Add timeout protection
+const uploadTimeout = setTimeout(() => {
+  setUploadStatus('error');
+  console.error('Upload timeout after 30s');
+}, 30000);
+
+// Clear timeout on success/error
+```
+
+## 2. PROGRESSIVE WEB APP (PWA)
+
+**Add manifest.json:**
+```json
+{
+  "name": "Your App Name",
+  "short_name": "App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+**Add service worker (sw.js):**
+- Cache static assets (CSS, JS, images)
+- Cache API responses with stale-while-revalidate
+- Offline fallback page
+- Background sync for failed uploads
+
+## 3. CACHING STRATEGY
+
+**Implement multi-layer cache:**
+- **Static assets:** Cache-first (CSS, JS, fonts, images)
+- **API calls:** Network-first with cache fallback
+- **Uploads:** No cache, but queue for retry
+- **User data:** LocalStorage + IndexedDB for large files
+
+**Add cache headers:**
+```javascript
+// Static: 1 year
+Cache-Control: public, max-age=31536000, immutable
+
+// API: 5 minutes
+Cache-Control: public, max-age=300, stale-while-revalidate=60
+```
+
+## 4. SMOKE TESTS
+
+**Create /tests/smoke.test.js:**
+```javascript
+// Test critical paths
+✓ App loads without errors
+✓ Upload form renders
+✓ File selection works
+✓ Upload initiates (mock)
+✓ Success/error states display
+✓ Service worker registers
+✓ LocalStorage available
+```
+
+**Add health check endpoint:**
+```javascript
+GET /api/health
+Response: { status: 'ok', timestamp: Date.now() }
+```
+
+## 5. LAZY LOADING
+
+**Implement:**
+- Image lazy loading: `<img loading="lazy" />`
+- Route-based code splitting (React.lazy, Suspense)
+- Defer non-critical JS
+- Load heavy libraries on-demand
+```javascript
+// Example
+const HeavyComponent = React.lazy(() => import('./HeavyComponent'));
+
+<Suspense fallback={<Spinner />}>
+  <HeavyComponent />
+</Suspense>
+```
+
+## 6. GRACEFUL DEGRADATION
+
+**Add fallbacks:**
+- No JavaScript: Show basic upload form
+- No service worker: App still works, just no offline
+- Slow connection: Show loading states, reduce image quality
+- Upload fails: Queue in LocalStorage, retry on reconnect
+- API down: Show cached data + "You're offline" banner
+
+**Feature detection:**
+```javascript
+if ('serviceWorker' in navigator) { /* register */ }
+if (window.localStorage) { /* use storage */ }
+if (navigator.onLine) { /* online features */ } else { /* offline mode */ }
+```
+
+## 7. LOCAL STORAGE
+
+**Implement:**
+- Save draft uploads (recover on refresh)
+- Cache user preferences
+- Queue failed uploads for retry
+- Store last successful upload timestamp
+```javascript
+// Save upload draft
+localStorage.setItem('upload_draft', JSON.stringify({
+  file: fileMetadata, // name, size, type (NOT file blob)
+  timestamp: Date.now()
+}));
+
+// Restore on mount
+useEffect(() => {
+  const draft = localStorage.getItem('upload_draft');
+  if (draft) {
+    const { file, timestamp } = JSON.parse(draft);
+    // Check if <5min old, offer to resume
+    if (Date.now() - timestamp < 300000) {
+      setShowResume(true);
+    }
+  }
+}, []);
+```
+
+## OUTPUT REQUIREMENTS
+
+**Must include:**
+1. Fixed upload with real-time status ("Uploading 45%...")
+2. manifest.json + service worker registered
+3. At least 3 smoke tests passing
+4. Lazy loaded images + route splitting
+5. Offline banner when network fails
+6. LocalStorage draft recovery
+
+**Test coverage:**
+- Upload works end-to-end
+- PWA installs on mobile
+- Works offline (cached assets load)
+- Failed uploads retry on reconnect
+- Page loads <2s on 3G
+
+**Success criteria:**
+✓ No more "pending" hangs (timeout or success within 30s)
+✓ PWA score >90 in Lighthouse
+✓ Works offline for previously loaded pages
+✓ Upload drafts survive page refresh
