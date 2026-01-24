@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Plus, LayoutDashboard, Loader2, Clock, BarChart3 } from "lucide-react";
+import { Plus, LayoutDashboard, Loader2, Clock, BarChart3, Wand2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,15 +96,23 @@ export default function DashboardPage() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <LayoutDashboard className="h-3 w-3" />
-                        {dashboard.widgetCount || 0} widgets
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <LayoutDashboard className="h-3 w-3" />
+                          {dashboard.widgetCount || 0} widgets
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(dashboard.createdAt)}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(dashboard.createdAt)}
-                      </div>
+                      <Link href={`/studio/${dashboard.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" data-testid={`button-studio-${dashboard.id}`}>
+                          <Wand2 className="h-3 w-3" />
+                          Studio
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>

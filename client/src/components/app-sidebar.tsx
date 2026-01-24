@@ -10,6 +10,7 @@ import {
   Sparkles,
   FolderOpen,
   Building2,
+  Wand2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -51,6 +52,11 @@ const mainNavItems = [
 ];
 
 const toolsNavItems = [
+  {
+    title: "Studio",
+    url: "/studio",
+    icon: Wand2,
+  },
   {
     title: "AI Insights",
     url: "/insights",

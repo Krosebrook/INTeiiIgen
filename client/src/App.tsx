@@ -26,6 +26,8 @@ const DashboardView = lazy(() => import("@/pages/dashboard-view"));
 const InsightsPage = lazy(() => import("@/pages/insights"));
 const SharedDashboard = lazy(() => import("@/pages/shared-dashboard"));
 const OrganizationsPage = lazy(() => import("@/pages/organizations"));
+const DashboardStudio = lazy(() => import("@/pages/dashboard-studio"));
+const StudioIndex = lazy(() => import("@/pages/studio"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component
@@ -76,6 +78,8 @@ function AuthenticatedRouter() {
         <Route path="/cloud" component={CloudPage} />
         <Route path="/new" component={NewDashboard} />
         <Route path="/dashboard/:id" component={DashboardView} />
+        <Route path="/studio/:id" component={DashboardStudio} />
+        <Route path="/studio" component={StudioIndex} />
         <Route path="/insights" component={InsightsPage} />
         <Route path="/reports" component={InsightsPage} />
         <Route path="/analytics" component={InsightsPage} />
