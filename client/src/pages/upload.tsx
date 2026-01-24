@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { FileUploadZone } from "@/components/file-upload-zone";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function UploadPage() {
   const [, navigate] = useLocation();
