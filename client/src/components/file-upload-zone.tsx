@@ -1,16 +1,20 @@
 import { useCallback, useState } from "react";
-import { Upload, File, X, FileSpreadsheet, FileText, Image, Globe } from "lucide-react";
+import { Upload, File, X, FileSpreadsheet, FileText, Image, Globe, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
+type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
+
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void;
+  onFilesChanged?: (files: File[]) => void;
   onUrlSubmit?: (url: string) => void;
   isUploading?: boolean;
   uploadProgress?: number;
+  uploadStatus?: UploadStatus;
   acceptedTypes?: string[];
   maxFiles?: number;
 }
@@ -42,11 +46,39 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
+const getStatusMessage = (status: UploadStatus, progress: number): string => {
+  switch (status) {
+    case 'uploading':
+      return `Uploading... ${progress}%`;
+    case 'success':
+      return 'Upload complete!';
+    case 'error':
+      return 'Upload failed. Please try again.';
+    default:
+      return '';
+  }
+};
+
+const getStatusIcon = (status: UploadStatus) => {
+  switch (status) {
+    case 'uploading':
+      return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+    case 'success':
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    case 'error':
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
+    default:
+      return null;
+  }
+};
+
 export function FileUploadZone({
   onFilesSelected,
+  onFilesChanged,
   onUrlSubmit,
   isUploading = false,
   uploadProgress = 0,
+  uploadStatus = 'idle',
   acceptedTypes = [".csv", ".json", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".md", ".txt"],
   maxFiles = 10,
 }: FileUploadZoneProps) {
@@ -74,8 +106,14 @@ export function FileUploadZone({
       id: Math.random().toString(36).substr(2, 9),
     }));
 
-    setSelectedFiles((prev) => [...prev, ...newFiles].slice(0, maxFiles));
-  }, [maxFiles]);
+    const updatedFiles = [...selectedFiles, ...newFiles].slice(0, maxFiles);
+    setSelectedFiles(updatedFiles);
+    
+    // Notify parent of file changes for draft saving
+    if (onFilesChanged) {
+      onFilesChanged(updatedFiles.map(f => f.file));
+    }
+  }, [maxFiles, selectedFiles, onFilesChanged]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -85,9 +123,15 @@ export function FileUploadZone({
         id: Math.random().toString(36).substr(2, 9),
       }));
 
-      setSelectedFiles((prev) => [...prev, ...newFiles].slice(0, maxFiles));
+      const updatedFiles = [...selectedFiles, ...newFiles].slice(0, maxFiles);
+      setSelectedFiles(updatedFiles);
+      
+      // Notify parent of file changes for draft saving
+      if (onFilesChanged) {
+        onFilesChanged(updatedFiles.map(f => f.file));
+      }
     }
-  }, [maxFiles]);
+  }, [maxFiles, selectedFiles, onFilesChanged]);
 
   const removeFile = useCallback((id: string) => {
     setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
@@ -106,6 +150,9 @@ export function FileUploadZone({
       setUrlInput("");
     }
   }, [urlInput, onUrlSubmit]);
+
+  // Clear selected files after successful upload
+  const effectiveFiles = uploadStatus === 'success' ? [] : selectedFiles;
 
   return (
     <div className="space-y-4">
@@ -147,9 +194,10 @@ export function FileUploadZone({
               multiple
               accept={acceptedTypes.join(",")}
               onChange={handleFileSelect}
+              disabled={isUploading}
               data-testid="input-file-select"
             />
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild disabled={isUploading}>
               <span className="cursor-pointer" data-testid="button-browse-files">Browse Files</span>
             </Button>
           </label>
@@ -168,10 +216,11 @@ export function FileUploadZone({
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   className="pl-10"
+                  disabled={isUploading}
                   data-testid="input-url-import"
                 />
               </div>
-              <Button type="submit" disabled={!urlInput.trim()} data-testid="button-import-url">
+              <Button type="submit" disabled={!urlInput.trim() || isUploading} data-testid="button-import-url">
                 Import
               </Button>
             </form>
@@ -179,31 +228,53 @@ export function FileUploadZone({
         </Card>
       )}
 
-      {selectedFiles.length > 0 && (
+      {effectiveFiles.length > 0 && (
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium">Selected Files ({selectedFiles.length})</h4>
+              <h4 className="font-medium">Selected Files ({effectiveFiles.length})</h4>
               <Button
                 onClick={handleUpload}
                 disabled={isUploading}
                 data-testid="button-upload-files"
               >
-                {isUploading ? "Uploading..." : "Upload All"}
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload All"
+                )}
               </Button>
             </div>
 
-            {isUploading && (
-              <div className="mb-4">
-                <Progress value={uploadProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Uploading... {uploadProgress}%
-                </p>
+            {/* Upload progress and status */}
+            {uploadStatus !== 'idle' && (
+              <div className="mb-4 space-y-2" data-testid="upload-status-container">
+                <Progress 
+                  value={uploadProgress} 
+                  className={`h-2 ${uploadStatus === 'error' ? 'bg-destructive/20' : ''}`}
+                  data-testid="progress-upload"
+                />
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(uploadStatus)}
+                  <p 
+                    className={`text-sm ${
+                      uploadStatus === 'success' ? 'text-green-500' : 
+                      uploadStatus === 'error' ? 'text-destructive' : 
+                      'text-muted-foreground'
+                    }`}
+                    data-testid="text-upload-status"
+                  >
+                    {getStatusMessage(uploadStatus, uploadProgress)}
+                  </p>
+                </div>
               </div>
             )}
 
             <div className="space-y-2">
-              {selectedFiles.map((item) => {
+              {effectiveFiles.map((item) => {
                 const FileIcon = getFileIcon(item.file.type);
                 return (
                   <div

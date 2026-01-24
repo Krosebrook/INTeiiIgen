@@ -78,6 +78,16 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // Health check endpoint (no auth required)
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: Date.now(),
+      uptime: process.uptime(),
+      version: "1.0.0"
+    });
+  });
+
   // Data Sources API
   app.get("/api/data-sources", isAuthenticated, async (req, res) => {
     try {

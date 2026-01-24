@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,20 +9,36 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { OfflineBanner } from "@/components/offline-banner";
 import { Loader2 } from "lucide-react";
 
+// Eagerly loaded pages (critical path)
 import SplashPage from "@/pages/splash";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
-import Upload from "@/pages/upload";
-import CloudPage from "@/pages/cloud";
-import DataSources from "@/pages/data-sources";
-import NewDashboard from "@/pages/new-dashboard";
-import DashboardView from "@/pages/dashboard-view";
-import InsightsPage from "@/pages/insights";
-import SharedDashboard from "@/pages/shared-dashboard";
-import OrganizationsPage from "@/pages/organizations";
-import NotFound from "@/pages/not-found";
+
+// Lazy loaded pages (non-critical, loaded on demand)
+const Upload = lazy(() => import("@/pages/upload"));
+const CloudPage = lazy(() => import("@/pages/cloud"));
+const DataSources = lazy(() => import("@/pages/data-sources"));
+const NewDashboard = lazy(() => import("@/pages/new-dashboard"));
+const DashboardView = lazy(() => import("@/pages/dashboard-view"));
+const InsightsPage = lazy(() => import("@/pages/insights"));
+const SharedDashboard = lazy(() => import("@/pages/shared-dashboard"));
+const OrganizationsPage = lazy(() => import("@/pages/organizations"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-full min-h-[200px]">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const sidebarStyle = {
@@ -39,7 +56,9 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
           </header>
           <main className="flex-1 overflow-auto custom-scrollbar">
-            {children}
+            <Suspense fallback={<PageLoader />}>
+              {children}
+            </Suspense>
           </main>
         </div>
       </div>
@@ -73,7 +92,11 @@ function Router() {
 
   // Public share route - doesn't require authentication
   if (location.startsWith("/share/")) {
-    return <SharedDashboard />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <SharedDashboard />
+      </Suspense>
+    );
   }
 
   if (isLoading) {
@@ -102,6 +125,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <OfflineBanner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
