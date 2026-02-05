@@ -70,6 +70,8 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 ### AI & Analytics
 - `GET /api/ai-analyses` - AI analysis results (OpenAI GPT-4.1-mini)
 - `POST /api/analyze/:sourceId` - Trigger AI analysis of data source
+- `POST /api/ai/generate-data` - AI-powered data generation for charts
+- `POST /api/ai/tooltip-insight` - Generate insights for chart tooltips
 
 ### Cloud Storage
 - `GET /api/cloud/:provider/files` - List files from Google Drive, OneDrive, Notion
@@ -110,7 +112,36 @@ See `DOCS.md` for complete documentation including:
 ### Health & Monitoring
 - `GET /api/health` - Health check endpoint for monitoring
 
+## Advanced Features
+
+### Aurora Background
+- Animated gradient background for landing page visual polish
+- CSS-based with 4 animated blob layers
+- Configurable opacity and animation speed
+
+### Dashboard Theme System
+- 5 theme variants: minimal, glass, dark, corporate, colorful
+- Per-widget theme application via DashboardThemeSelector
+- CSS custom properties for consistent theming
+
+### AI Interactive Tooltips
+- On-hover AI insights for chart data points
+- Real-time API calls to OpenAI for contextual analysis
+- Graceful fallback with mock insights on failure
+
+### Data Table Editor
+- Inline cell editing for chart data
+- AI-powered data generation with natural language prompts
+- CSV export functionality
+- Add/delete row operations
+
+### Layout Templates
+- 5 pre-built dashboard layouts (Executive Overview, Sales Performance, Analytics, Data Table Focus, Comparison View)
+- One-click template application with auto-widget creation
+- Default data included for immediate visualization
+
 ## Recent Changes
+- February 2026: Added 5 advanced features (Aurora background, Theme selector, AI tooltips, Data table editor, Layout templates)
 - January 2026: Added Dashboard Creator Studio (/studio, /studio/:id) for visually building and editing dashboards with widget templates
 - January 2026: Added PWA support with service worker, offline detection, lazy loading, upload progress tracking with XHR timeout protection, and draft recovery
 - January 2026: Initial implementation with full multi-tenant schema, file upload, cloud connectors, chart widgets, and AI insights integration

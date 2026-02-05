@@ -905,5 +905,88 @@ Be concise, helpful, and provide actionable insights when possible. If asked abo
     }
   });
 
+  // AI Data Generation Endpoint
+  const aiGenerateDataSchema = z.object({
+    prompt: z.string().min(1).max(500),
+    columns: z.array(z.string()).min(1).max(10),
+    widgetTitle: z.string().optional(),
+    count: z.number().min(1).max(50).optional(),
+  });
+
+  app.post("/api/ai/generate-data", isAuthenticated, async (req, res) => {
+    try {
+      const parseResult = aiGenerateDataSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+      }
+      const { prompt, columns, widgetTitle, count } = parseResult.data;
+
+      const systemPrompt = `Generate ${count || 6} data points for a chart widget. The data should match this description: "${prompt}". 
+      
+Return a JSON array where each object has these fields: ${columns.join(", ")}. 
+The "name" field should be descriptive labels (months, categories, etc).
+The "value" field should be numeric data that matches the prompt.
+${widgetTitle ? `This is for a "${widgetTitle}" chart.` : ""}
+
+Return ONLY valid JSON array, no explanation.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 500,
+      });
+
+      const content = response.choices[0]?.message?.content || "[]";
+      try {
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        const data = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+        res.json({ data });
+      } catch {
+        res.json({ data: [] });
+      }
+    } catch (error) {
+      console.error("Error generating AI data:", error);
+      res.status(500).json({ error: "Failed to generate data" });
+    }
+  });
+
+  // AI Tooltip Insight Endpoint
+  const aiTooltipInsightSchema = z.object({
+    label: z.string().min(1).max(100),
+    value: z.number(),
+    widgetTitle: z.string().optional(),
+    dataName: z.string().optional(),
+  });
+
+  app.post("/api/ai/tooltip-insight", isAuthenticated, async (req, res) => {
+    try {
+      const parseResult = aiTooltipInsightSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+      }
+      const { label, value, widgetTitle } = parseResult.data;
+
+      const prompt = `Provide a 1-sentence business insight for: "${label}" with value ${value} in "${widgetTitle || "data"}" widget. Be specific, analytical, and actionable. No fluff.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: "You are a data analyst providing concise, actionable insights." },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 100,
+      });
+
+      const insight = response.choices[0]?.message?.content || "This data point shows notable variation worth investigating.";
+      res.json({ insight });
+    } catch (error) {
+      console.error("Error generating tooltip insight:", error);
+      res.status(500).json({ error: "Failed to generate insight" });
+    }
+  });
+
   return httpServer;
 }

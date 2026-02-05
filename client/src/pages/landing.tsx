@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarChart3, Upload, Cloud, Sparkles, Shield, Zap } from "lucide-react";
 import { fadeInUp, staggerContainer, smoothTransition } from "@/lib/animations";
+import { AuroraBackground } from "@/components/aurora-background";
 
 const features = [
   {
@@ -40,7 +41,8 @@ const features = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <AuroraBackground opacity={0.5} speed="slow" />
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

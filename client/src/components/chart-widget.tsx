@@ -28,6 +28,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AIInteractiveTooltip } from "@/components/ai-interactive-tooltip";
+import { getThemeClasses, type DashboardTheme } from "@/components/dashboard-theme-selector";
 
 interface ChartWidgetProps {
   id: number;
@@ -47,6 +49,8 @@ interface ChartWidgetProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onExpand?: () => void;
+  themeVariant?: DashboardTheme;
+  enableAITooltips?: boolean;
 }
 
 const defaultColors = [
@@ -67,8 +71,38 @@ export function ChartWidget({
   onEdit,
   onDelete,
   onExpand,
+  themeVariant = 'minimal',
+  enableAITooltips = true,
 }: ChartWidgetProps) {
   const colors = config.colors || defaultColors;
+  const themeClasses = getThemeClasses(themeVariant);
+
+  const renderTooltip = () => {
+    if (enableAITooltips) {
+      return (
+        <Tooltip 
+          content={(props: any) => (
+            <AIInteractiveTooltip 
+              {...props} 
+              widgetTitle={title} 
+              enableAI={true} 
+            />
+          )}
+          wrapperStyle={{ zIndex: 100, pointerEvents: 'auto' }}
+        />
+      );
+    }
+    return (
+      <Tooltip
+        contentStyle={{
+          backgroundColor: "hsl(var(--popover))",
+          border: "1px solid hsl(var(--border))",
+          borderRadius: "var(--radius)",
+        }}
+        labelStyle={{ color: "hsl(var(--foreground))" }}
+      />
+    );
+  };
 
   const chartContent = useMemo(() => {
     if (!data || data.length === 0) {
@@ -81,23 +115,19 @@ export function ChartWidget({
 
     const xKey = config.xAxis || Object.keys(data[0])[0];
     const yKey = config.yAxis || Object.keys(data[0])[1];
+    const gridColor = themeVariant === 'dark' ? '#334155' : undefined;
 
     switch (type) {
       case "bar":
         return (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              {config.showGrid !== false && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
+              {config.showGrid !== false && (
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
+              )}
               <XAxis dataKey={xKey} tick={{ fontSize: 12 }} className="text-muted-foreground" />
               <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
-              />
+              {renderTooltip()}
               {config.showLegend && <Legend />}
               <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -108,16 +138,12 @@ export function ChartWidget({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              {config.showGrid !== false && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
+              {config.showGrid !== false && (
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
+              )}
               <XAxis dataKey={xKey} tick={{ fontSize: 12 }} className="text-muted-foreground" />
               <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
+              {renderTooltip()}
               {config.showLegend && <Legend />}
               <Line
                 type="monotone"
@@ -135,16 +161,12 @@ export function ChartWidget({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              {config.showGrid !== false && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
+              {config.showGrid !== false && (
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
+              )}
               <XAxis dataKey={xKey} tick={{ fontSize: 12 }} className="text-muted-foreground" />
               <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
+              {renderTooltip()}
               {config.showLegend && <Legend />}
               <Area
                 type="monotone"
@@ -176,13 +198,7 @@ export function ChartWidget({
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
+              {renderTooltip()}
               {config.showLegend && <Legend />}
             </PieChart>
           </ResponsiveContainer>
@@ -192,16 +208,12 @@ export function ChartWidget({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              {config.showGrid !== false && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
+              {config.showGrid !== false && (
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
+              )}
               <XAxis dataKey={xKey} tick={{ fontSize: 12 }} className="text-muted-foreground" />
               <YAxis dataKey={yKey} tick={{ fontSize: 12 }} className="text-muted-foreground" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
+              {renderTooltip()}
               {config.showLegend && <Legend />}
               <Scatter data={data} fill={colors[0]} />
             </ScatterChart>
@@ -251,14 +263,16 @@ export function ChartWidget({
       default:
         return <div>Unsupported chart type</div>;
     }
-  }, [type, data, config, colors]);
+  }, [type, data, config, colors, themeVariant, enableAITooltips, title]);
 
   return (
-    <Card className="h-full flex flex-col chart-container" data-testid={`widget-${id}`}>
+    <Card className={`h-full flex flex-col chart-container ${themeClasses}`} data-testid={`widget-${id}`}>
       <CardHeader className="pb-2 flex-shrink-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-base truncate">{title}</CardTitle>
+            <CardTitle className={`text-base truncate ${themeVariant === 'dark' ? 'text-white' : ''}`}>
+              {title}
+            </CardTitle>
             {aiInsights && (
               <CardDescription className="flex items-center gap-1 mt-1">
                 <Sparkles className="h-3 w-3 text-primary" />

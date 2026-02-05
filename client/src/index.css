@@ -423,3 +423,148 @@
     }
   }
 }
+
+/* Aurora Background Styles */
+.aurora-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aurora-base {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, 
+    hsl(var(--background)) 0%, 
+    hsl(var(--background)) 100%
+  );
+}
+
+.aurora-layers {
+  position: absolute;
+  inset: 0;
+  filter: blur(80px);
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  animation: aurora-float linear infinite;
+}
+
+.aurora-blob-1 {
+  width: 60%;
+  height: 60%;
+  top: -20%;
+  left: 10%;
+  background: radial-gradient(circle, hsl(217 91% 60% / 0.4) 0%, transparent 70%);
+}
+
+.aurora-blob-2 {
+  width: 50%;
+  height: 50%;
+  top: 10%;
+  right: -10%;
+  background: radial-gradient(circle, hsl(280 70% 50% / 0.3) 0%, transparent 70%);
+  animation-delay: -5s;
+  animation-direction: reverse;
+}
+
+.aurora-blob-3 {
+  width: 45%;
+  height: 45%;
+  bottom: 0%;
+  left: 20%;
+  background: radial-gradient(circle, hsl(160 84% 39% / 0.25) 0%, transparent 70%);
+  animation-delay: -10s;
+}
+
+.aurora-blob-4 {
+  width: 40%;
+  height: 40%;
+  bottom: 10%;
+  right: 10%;
+  background: radial-gradient(circle, hsl(200 80% 55% / 0.3) 0%, transparent 70%);
+  animation-delay: -15s;
+  animation-direction: reverse;
+}
+
+@keyframes aurora-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(5%, 10%) scale(1.1);
+  }
+  50% {
+    transform: translate(-5%, 5%) scale(0.95);
+  }
+  75% {
+    transform: translate(3%, -5%) scale(1.05);
+  }
+}
+
+.aurora-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, transparent 0%, hsl(var(--background) / 0.8) 100%);
+}
+
+.aurora-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+}
+
+.aurora-grain svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dark .aurora-blob-1 {
+  background: radial-gradient(circle, hsl(217 91% 50% / 0.35) 0%, transparent 70%);
+}
+
+.dark .aurora-blob-2 {
+  background: radial-gradient(circle, hsl(280 70% 45% / 0.25) 0%, transparent 70%);
+}
+
+.dark .aurora-blob-3 {
+  background: radial-gradient(circle, hsl(160 84% 35% / 0.2) 0%, transparent 70%);
+}
+
+.dark .aurora-blob-4 {
+  background: radial-gradient(circle, hsl(200 80% 45% / 0.25) 0%, transparent 70%);
+}
+
+/* Dashboard Theme Variants */
+.theme-glass {
+  --widget-bg: hsl(var(--card) / 0.3);
+  --widget-border: hsl(var(--border) / 0.3);
+  --widget-backdrop: blur(16px);
+}
+
+.theme-dark {
+  --widget-bg: hsl(222 47% 11%);
+  --widget-border: hsl(217 33% 17%);
+  --widget-text: hsl(210 40% 98%);
+}
+
+.theme-corporate {
+  --widget-bg: hsl(var(--card));
+  --widget-border: transparent;
+  --widget-accent-top: hsl(var(--primary));
+}
+
+.theme-colorful {
+  --widget-bg: linear-gradient(135deg, hsl(217 91% 60% / 0.05) 0%, hsl(280 70% 50% / 0.05) 100%);
+  --widget-border: hsl(217 60% 70% / 0.3);
+}
+
+.theme-minimal {
+  --widget-bg: hsl(var(--card));
+  --widget-border: hsl(var(--border));
+}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,12 +21,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ChartWidget } from "@/components/chart-widget";
 import { VisualWidgetBuilder } from "@/components/visual-widget-builder";
+import { DashboardThemeSelector, type DashboardTheme, getThemeClasses } from "@/components/dashboard-theme-selector";
+import { LayoutTemplatesDialog, type LayoutTemplateConfig } from "@/components/layout-templates";
 import {
   Plus,
   ArrowLeft,
@@ -34,8 +35,6 @@ import {
   LayoutGrid,
   Wand2,
   Eye,
-  Save,
-  Trash2,
   Copy,
   Check,
   Share2,
@@ -47,8 +46,8 @@ import {
   Table2,
   Hash,
   Loader2,
-  GripVertical,
   X,
+  LayoutTemplate,
 } from "lucide-react";
 import { fadeInUp, staggerContainer, smoothTransition } from "@/lib/animations";
 import type { Dashboard, Widget, DataSource } from "@shared/schema";
@@ -73,6 +72,7 @@ export default function DashboardStudio() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [dashboardTheme, setDashboardTheme] = useState<DashboardTheme>('minimal');
 
   const { data: dashboard, isLoading: dashboardLoading } = useQuery<Dashboard>({
     queryKey: ["/api/dashboards", id],
@@ -159,6 +159,32 @@ export default function DashboardStudio() {
     setShowWidgetBuilder(true);
   };
 
+  const handleApplyTemplate = async (template: LayoutTemplateConfig) => {
+    for (let i = 0; i < template.widgets.length; i++) {
+      const widget = template.widgets[i];
+      await createWidgetMutation.mutateAsync({
+        title: widget.title,
+        type: widget.type,
+        config: {
+          data: widget.defaultData || [],
+          xAxis: 'name',
+          yAxis: 'value',
+          showGrid: true,
+          showLegend: widget.type === 'pie',
+        },
+        position: {
+          gridColumn: widget.gridColumn || 'span 1',
+          gridRow: widget.gridRow || 'span 1',
+          order: i,
+        },
+      });
+    }
+    toast({
+      title: "Template Applied",
+      description: `Added ${template.widgets.length} widgets from "${template.name}" template.`,
+    });
+  };
+
   if (dashboardLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -208,6 +234,19 @@ export default function DashboardStudio() {
             </div>
 
             <div className="flex items-center gap-2">
+              <DashboardThemeSelector 
+                theme={dashboardTheme} 
+                onThemeChange={setDashboardTheme} 
+              />
+              <LayoutTemplatesDialog 
+                onSelectTemplate={handleApplyTemplate}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2" data-testid="button-layout-templates">
+                    <LayoutTemplate className="h-4 w-4" />
+                    <span className="hidden sm:inline">Templates</span>
+                  </Button>
+                }
+              />
               <Button
                 variant={previewMode ? "default" : "outline"}
                 size="sm"
@@ -399,6 +438,7 @@ export default function DashboardStudio() {
                           config={widget.config as any}
                           aiInsights={widget.aiInsights || undefined}
                           onDelete={previewMode ? undefined : () => deleteWidgetMutation.mutate(widget.id)}
+                          themeVariant={dashboardTheme}
                         />
                       </motion.div>
                     ))}
