@@ -35,7 +35,7 @@ export function AISuggestions({ type, context, onSelectSuggestion, compact = fal
   const generateSuggestions = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest('/api/ai/suggestions', 'POST', {
+      const response = await apiRequest('POST', '/api/ai/suggestions', {
         type,
         context,
       });
@@ -85,8 +85,7 @@ export function AISuggestions({ type, context, onSelectSuggestion, compact = fal
               </span>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
+                size="sm"
                 onClick={generateSuggestions}
                 disabled={loading}
               >

@@ -238,7 +238,7 @@ export function VisualWidgetBuilder({
               transition={smoothTransition}
               className="h-full"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between gap-4 mb-4">
                 <h3 className="text-sm font-medium">Choose Chart Type</h3>
                 <AISuggestions
                   type="chart-type"

@@ -5,6 +5,7 @@ import { FileUploadZone } from "@/components/file-upload-zone";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { AISuggestions } from "@/components/ai-suggestions";
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -268,6 +269,28 @@ export default function UploadPage() {
           </CardContent>
         </Card>
       )}
+
+      <AISuggestions
+        type="upload"
+        onSelectSuggestion={(s) => {
+          if (s.value?.action === 'dashboard') {
+            toast({
+              title: "Create Dashboard",
+              description: "Upload your data first, then create a dashboard from it.",
+            });
+          } else if (s.value?.action === 'analyze') {
+            toast({
+              title: "AI Analysis",
+              description: "Upload your data and we'll automatically analyze it with AI.",
+            });
+          } else if (s.value?.action === 'visualize') {
+            toast({
+              title: "Quick Visualization",
+              description: "Upload data to create instant charts and visualizations.",
+            });
+          }
+        }}
+      />
 
       <FileUploadZone
         onFilesSelected={handleFilesSelected}
