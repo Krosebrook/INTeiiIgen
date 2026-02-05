@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -13,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   BarChart3,
   LineChart,
@@ -26,6 +24,7 @@ import {
   Sliders,
   ChevronRight,
 } from "lucide-react";
+import { AISuggestions } from "@/components/ai-suggestions";
 import {
   BarChart,
   Bar,
@@ -239,7 +238,18 @@ export function VisualWidgetBuilder({
               transition={smoothTransition}
               className="h-full"
             >
-              <h3 className="text-sm font-medium mb-4">Choose Chart Type</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium">Choose Chart Type</h3>
+                <AISuggestions
+                  type="chart-type"
+                  context={{ columns }}
+                  onSelectSuggestion={(s) => {
+                    if (s.value?.type) setSelectedType(s.value.type);
+                    if (s.value?.title) setTitle(s.value.title);
+                  }}
+                  compact
+                />
+              </div>
               <motion.div
                 variants={staggerContainer}
                 initial="hidden"
@@ -312,6 +322,15 @@ export function VisualWidgetBuilder({
 
                   {columns.length > 0 && selectedType !== "table" && selectedType !== "stat" && (
                     <>
+                      <AISuggestions
+                        type="field-mapping"
+                        context={{ columns }}
+                        onSelectSuggestion={(s) => {
+                          if (s.value?.xAxis) setXAxis(s.value.xAxis);
+                          if (s.value?.yAxis) setYAxis(s.value.yAxis);
+                        }}
+                        compact
+                      />
                       <div className="space-y-2">
                         <Label>X Axis (Category)</Label>
                         <Select value={xAxis} onValueChange={setXAxis}>

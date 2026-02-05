@@ -953,6 +953,66 @@ Return ONLY valid JSON array, no explanation.`;
     }
   });
 
+  // AI Suggestions Endpoint
+  const aiSuggestionsSchema = z.object({
+    type: z.enum(['dashboard', 'widget', 'upload', 'chart-type', 'field-mapping']),
+    context: z.object({
+      dataSourceNames: z.array(z.string()).optional(),
+      columns: z.array(z.string()).optional(),
+      dataPreview: z.array(z.any()).optional(),
+      existingTitle: z.string().optional(),
+      chartType: z.string().optional(),
+    }).optional(),
+  });
+
+  app.post("/api/ai/suggestions", isAuthenticated, async (req, res) => {
+    try {
+      const parseResult = aiSuggestionsSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+      }
+      const { type, context } = parseResult.data;
+
+      let prompt = '';
+      switch (type) {
+        case 'dashboard':
+          prompt = `Generate 3 dashboard name and description suggestions for a data analytics dashboard. ${context?.dataSourceNames?.length ? `The data sources are: ${context.dataSourceNames.join(', ')}.` : ''} Return JSON array with objects containing: id, title, description, value (object with title and description). Focus on business intelligence best practices.`;
+          break;
+        case 'widget':
+        case 'chart-type':
+          prompt = `Suggest 3 best chart types for data with columns: ${context?.columns?.join(', ') || 'various'}. Return JSON array with objects containing: id, title, description, value (object with type and suggested title), confidence (high/medium/low). Consider data visualization best practices.`;
+          break;
+        case 'field-mapping':
+          prompt = `For a chart with columns: ${context?.columns?.join(', ') || 'name, value'}, suggest the best X and Y axis mappings. Return JSON array with one object containing: id, title, description, value (object with xAxis and yAxis column names), confidence.`;
+          break;
+        case 'upload':
+          prompt = `Suggest 3 actions a user can take after uploading data files. Return JSON array with objects containing: id, title, description, value (object with action name), confidence. Focus on data analysis and visualization options.`;
+          break;
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: "You are a data analytics assistant providing actionable suggestions. Return only valid JSON arrays, no explanation." },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 500,
+      });
+
+      const content = response.choices[0]?.message?.content || "[]";
+      try {
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        const suggestions = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+        res.json({ suggestions });
+      } catch {
+        res.json({ suggestions: [] });
+      }
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      res.status(500).json({ error: "Failed to generate suggestions" });
+    }
+  });
+
   // AI Tooltip Insight Endpoint
   const aiTooltipInsightSchema = z.object({
     label: z.string().min(1).max(100),

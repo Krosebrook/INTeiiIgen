@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { AISuggestions } from "@/components/ai-suggestions";
 import type { DataSource } from "@shared/schema";
 
 const formSchema = z.object({
@@ -87,6 +88,21 @@ export default function NewDashboardPage() {
 
   const readySources = dataSources?.filter((s) => s.status === "ready") || [];
 
+  const selectedSourceNames = useMemo(() => {
+    return readySources
+      .filter(s => selectedSources.includes(s.id))
+      .map(s => s.name);
+  }, [readySources, selectedSources]);
+
+  const handleAISuggestion = (suggestion: any) => {
+    if (suggestion.value?.title) {
+      form.setValue('title', suggestion.value.title);
+    }
+    if (suggestion.value?.description) {
+      form.setValue('description', suggestion.value.description);
+    }
+  };
+
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       <div>
@@ -106,6 +122,14 @@ export default function NewDashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {selectedSources.length > 0 && (
+                <AISuggestions
+                  type="dashboard"
+                  context={{ dataSourceNames: selectedSourceNames }}
+                  onSelectSuggestion={handleAISuggestion}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="title"
