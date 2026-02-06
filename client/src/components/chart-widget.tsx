@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -10,6 +10,14 @@ import {
   Area,
   ScatterChart,
   Scatter,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  FunnelChart,
+  Funnel,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,11 +29,12 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Maximize2, Trash2, Sparkles } from "lucide-react";
+import { MoreHorizontal, Maximize2, Trash2, Sparkles, Download, Image as ImageIcon, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AIInteractiveTooltip } from "@/components/ai-interactive-tooltip";
@@ -34,7 +43,7 @@ import { getThemeClasses, type DashboardTheme } from "@/components/dashboard-the
 interface ChartWidgetProps {
   id: number;
   title: string;
-  type: "bar" | "line" | "pie" | "area" | "scatter" | "stat" | "table";
+  type: "bar" | "line" | "pie" | "area" | "scatter" | "stat" | "table" | "donut" | "gauge" | "funnel" | "radar";
   data: any[];
   config: {
     xAxis?: string;
@@ -44,6 +53,8 @@ interface ChartWidgetProps {
     showGrid?: boolean;
     statValue?: string;
     statLabel?: string;
+    gaugeMin?: number;
+    gaugeMax?: number;
   };
   aiInsights?: string;
   onEdit?: () => void;
@@ -61,6 +72,40 @@ const defaultColors = [
   "hsl(var(--chart-5))",
 ];
 
+function exportWidgetAsCSV(title: string, data: any[]) {
+  if (!data || data.length === 0) return;
+  const headers = Object.keys(data[0]);
+  const csvRows = [headers.join(",")];
+  data.forEach(row => {
+    csvRows.push(headers.map(h => {
+      const val = row[h];
+      const str = val === null || val === undefined ? "" : String(val);
+      return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+    }).join(","));
+  });
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title.replace(/[^a-z0-9]/gi, "_")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportWidgetAsPNG(chartRef: HTMLDivElement | null, title: string) {
+  if (!chartRef) return;
+  try {
+    const { toPng } = await import("html-to-image");
+    const dataUrl = await toPng(chartRef, { backgroundColor: "#ffffff", pixelRatio: 2 });
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${title.replace(/[^a-z0-9]/gi, "_")}.png`;
+    a.click();
+  } catch (e) {
+    console.error("PNG export failed", e);
+  }
+}
+
 export function ChartWidget({
   id,
   title,
@@ -76,6 +121,7 @@ export function ChartWidget({
 }: ChartWidgetProps) {
   const colors = config.colors || defaultColors;
   const themeClasses = getThemeClasses(themeVariant);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const renderTooltip = () => {
     if (enableAITooltips) {
@@ -204,6 +250,115 @@ export function ChartWidget({
           </ResponsiveContainer>
         );
 
+      case "donut":
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="80%"
+                dataKey={yKey}
+                nameKey={xKey}
+                paddingAngle={3}
+                cornerRadius={4}
+              >
+                {data.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              {renderTooltip()}
+              {config.showLegend && <Legend />}
+            </PieChart>
+          </ResponsiveContainer>
+        );
+
+      case "gauge": {
+        const numValue = parseFloat(config.statValue || String(data[0]?.[yKey] ?? 0));
+        const gaugeMin = config.gaugeMin ?? 0;
+        const gaugeMax = config.gaugeMax ?? 100;
+        const pct = Math.min(100, Math.max(0, ((numValue - gaugeMin) / (gaugeMax - gaugeMin)) * 100));
+        const gaugeData = [
+          { name: "value", value: pct },
+          { name: "remaining", value: 100 - pct },
+        ];
+        const gaugeColor = pct < 33 ? "#ef4444" : pct < 66 ? "#f59e0b" : "#22c55e";
+        return (
+          <div className="flex flex-col items-center justify-center h-full">
+            <ResponsiveContainer width="100%" height="70%">
+              <PieChart>
+                <Pie
+                  data={gaugeData}
+                  cx="50%"
+                  cy="70%"
+                  startAngle={180}
+                  endAngle={0}
+                  innerRadius="60%"
+                  outerRadius="90%"
+                  dataKey="value"
+                  stroke="none"
+                >
+                  <Cell fill={gaugeColor} />
+                  <Cell fill="hsl(var(--muted))" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="text-center -mt-4">
+              <p className="text-3xl font-bold">{numValue.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">
+                {config.statLabel || xKey} ({gaugeMin} - {gaugeMax})
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      case "funnel": {
+        const funnelData = data.map((d, i) => ({
+          ...d,
+          fill: colors[i % colors.length],
+        }));
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <FunnelChart>
+              <Funnel
+                dataKey={yKey}
+                data={funnelData}
+                isAnimationActive
+                nameKey={xKey}
+              >
+                <LabelList position="right" fill="#888" fontSize={12} dataKey={xKey} />
+                {funnelData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Funnel>
+              {renderTooltip()}
+            </FunnelChart>
+          </ResponsiveContainer>
+        );
+      }
+
+      case "radar":
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+              <PolarGrid stroke="hsl(var(--border))" />
+              <PolarAngleAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+              <PolarRadiusAxis tick={{ fontSize: 10 }} />
+              {renderTooltip()}
+              <Radar
+                dataKey={yKey}
+                stroke={colors[0]}
+                fill={colors[0]}
+                fillOpacity={0.3}
+                strokeWidth={2}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        );
+
       case "scatter":
         return (
           <ResponsiveContainer width="100%" height="100%">
@@ -221,8 +376,8 @@ export function ChartWidget({
         );
 
       case "stat":
-        const value = config.statValue || Object.values(data[0] || {})[0];
-        const label = config.statLabel || Object.keys(data[0] || {})[0];
+        const value = String(config.statValue || Object.values(data[0] || {})[0] || "");
+        const label = String(config.statLabel || Object.keys(data[0] || {})[0] || "");
         return (
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-4xl font-bold tracking-tight">{value}</p>
@@ -286,7 +441,7 @@ export function ChartWidget({
             </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`button-widget-menu-${id}`}>
+                <Button variant="ghost" size="icon" data-testid={`button-widget-menu-${id}`}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -297,11 +452,23 @@ export function ChartWidget({
                     Expand
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => exportWidgetAsCSV(title, data)} data-testid={`button-export-csv-${id}`}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportWidgetAsPNG(chartRef.current, title)} data-testid={`button-export-png-${id}`}>
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Export PNG
+                </DropdownMenuItem>
                 {onDelete && (
-                  <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -309,7 +476,7 @@ export function ChartWidget({
         </div>
       </CardHeader>
       <CardContent className="flex-1 min-h-0 p-4 pt-0">
-        <div className="h-full min-h-[200px]">{chartContent}</div>
+        <div ref={chartRef} className="h-full min-h-[200px]">{chartContent}</div>
       </CardContent>
     </Card>
   );

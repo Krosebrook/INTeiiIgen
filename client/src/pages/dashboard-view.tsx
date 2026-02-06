@@ -7,6 +7,7 @@ import { VisualWidgetBuilder } from "@/components/visual-widget-builder";
 import { KpiCards } from "@/components/kpi-cards";
 import { SmartAssistant } from "@/components/smart-assistant";
 import { TemplateGallery, type DashboardTemplate } from "@/components/template-gallery";
+import { NLQPanel } from "@/components/nlq-panel";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -194,6 +195,28 @@ export default function DashboardViewPage() {
       {readyDataSources.length > 0 && (
         <motion.div variants={fadeInUp} transition={{ ...smoothTransition, delay: 0.1 }} className="mb-6">
           <KpiCards dataSources={readyDataSources} />
+        </motion.div>
+      )}
+
+      {readyDataSources.length > 0 && (
+        <motion.div variants={fadeInUp} transition={{ ...smoothTransition, delay: 0.15 }} className="mb-6">
+          <NLQPanel
+            dataSources={readyDataSources}
+            onAddToDashboard={(result, dataSourceId) => {
+              createWidgetMutation.mutate({
+                type: result.chartType,
+                title: result.title || "Query Result",
+                dataSourceId,
+                config: {
+                  data: result.data,
+                  xAxis: result.xAxis,
+                  yAxis: result.yAxis,
+                  statValue: result.statValue,
+                  statLabel: result.statLabel,
+                },
+              });
+            }}
+          />
         </motion.div>
       )}
 

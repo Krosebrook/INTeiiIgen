@@ -12,6 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DataExplorer } from "@/components/data-explorer";
+import {
   Upload,
   Cloud,
   FolderOpen,
@@ -40,6 +47,7 @@ export default function DataPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [exploringSource, setExploringSource] = useState<DataSource | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [draftFiles, setDraftFiles] = useState<UploadDraft["files"] | null>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
@@ -382,7 +390,7 @@ export default function DataPage() {
                     dataSource={source}
                     onDelete={() => deleteMutation.mutate(source.id)}
                     onAnalyze={() => analyzeMutation.mutate(source.id)}
-                    onView={() => {}}
+                    onView={() => setExploringSource(source)}
                   />
                 ))}
               </div>
@@ -514,6 +522,25 @@ export default function DataPage() {
           <CloudConnector onFileSelect={handleCloudFileSelect} />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!exploringSource} onOpenChange={(open) => !open && setExploringSource(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle data-testid="text-explorer-title">
+              {exploringSource?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {exploringSource && (
+            <DataExplorer
+              dataSource={exploringSource}
+              onCreateWidget={() => {
+                setExploringSource(null);
+                navigate("/new");
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

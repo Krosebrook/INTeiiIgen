@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, LayoutGrid, Sparkles, Share2, Settings, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, Sparkles, Share2, Settings, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ChartWidget } from "./chart-widget";
+import { DashboardFilters, applyFilters, type DashboardFilter } from "./dashboard-filters";
 import type { Widget, Dashboard, DataSource } from "@shared/schema";
 
 function resolveWidgetData(widget: Widget, dataSources?: DataSource[]): any[] {
@@ -61,6 +62,7 @@ export function DashboardGrid({
   onGenerateInsights,
 }: DashboardGridProps) {
   const [expandedWidget, setExpandedWidget] = useState<Widget | null>(null);
+  const [filters, setFilters] = useState<DashboardFilter[]>([]);
 
   const gridLayout = useMemo(() => {
     if (widgets.length === 0) return null;
@@ -71,6 +73,8 @@ export function DashboardGrid({
           const position = (widget.position as { w?: number; h?: number }) || {};
           const colSpan = position.w && position.w > 1 ? `md:col-span-${Math.min(position.w, 3)}` : "";
           const rowSpan = position.h && position.h > 1 ? `row-span-${Math.min(position.h, 2)}` : "";
+          const rawWidgetData = resolveWidgetData(widget, dataSources);
+          const filteredData = applyFilters(rawWidgetData, filters);
 
           return (
             <div
@@ -82,7 +86,7 @@ export function DashboardGrid({
                 id={widget.id}
                 title={widget.title}
                 type={widget.type as any}
-                data={resolveWidgetData(widget, dataSources)}
+                data={filteredData}
                 config={widget.config as any}
                 aiInsights={widget.aiInsights || undefined}
                 onDelete={() => onDeleteWidget?.(widget.id)}
@@ -93,7 +97,7 @@ export function DashboardGrid({
         })}
       </div>
     );
-  }, [widgets, dataSources, onDeleteWidget]);
+  }, [widgets, dataSources, onDeleteWidget, filters]);
 
   return (
     <div className="space-y-6">
@@ -134,6 +138,15 @@ export function DashboardGrid({
           </Button>
         </div>
       </div>
+
+      {widgets.length > 0 && (
+        <DashboardFilters
+          dataSources={dataSources}
+          widgets={widgets}
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-24">

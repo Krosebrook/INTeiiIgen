@@ -101,6 +101,64 @@ function parseTextFile(content: string, fileName: string): { data: Record<string
   };
 }
 
+function profileData(data: Record<string, any>[]): Record<string, any> {
+  if (!data || data.length === 0) return { columns: [], rowCount: 0 };
+  
+  const headers = Object.keys(data[0]);
+  const rowCount = data.length;
+  const columns = headers.map(header => {
+    const values = data.map(row => row[header]);
+    const nonNull = values.filter(v => v !== null && v !== undefined && v !== "");
+    const nullCount = values.length - nonNull.length;
+    const nullPct = Math.round((nullCount / values.length) * 100);
+    const uniqueValues = new Set(nonNull.map(String));
+    const uniqueCount = uniqueValues.size;
+    
+    const numericValues = nonNull
+      .map(v => typeof v === "number" ? v : parseFloat(String(v)))
+      .filter(v => !isNaN(v));
+    const isNumeric = numericValues.length > nonNull.length * 0.7 && numericValues.length > 0;
+    
+    const datePatterns = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}|^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/;
+    const dateCount = nonNull.filter(v => datePatterns.test(String(v))).length;
+    const isDate = dateCount > nonNull.length * 0.7 && dateCount > 0;
+    
+    const inferredType = isNumeric ? "number" : isDate ? "date" : "text";
+    
+    const col: Record<string, any> = {
+      name: header,
+      type: inferredType,
+      nullCount,
+      nullPct,
+      uniqueCount,
+      totalCount: values.length,
+    };
+    
+    if (isNumeric && numericValues.length > 0) {
+      col.min = Math.min(...numericValues);
+      col.max = Math.max(...numericValues);
+      col.avg = Math.round((numericValues.reduce((a, b) => a + b, 0) / numericValues.length) * 100) / 100;
+      col.sum = Math.round(numericValues.reduce((a, b) => a + b, 0) * 100) / 100;
+    }
+    
+    if (inferredType === "text" && uniqueCount <= 50) {
+      const freq: Record<string, number> = {};
+      nonNull.forEach(v => {
+        const s = String(v);
+        freq[s] = (freq[s] || 0) + 1;
+      });
+      col.topValues = Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([value, count]) => ({ value, count }));
+    }
+    
+    return col;
+  });
+  
+  return { columns, rowCount, sampleRows: data.slice(0, 5) };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -144,6 +202,27 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching data source:", error);
       res.status(500).json({ error: "Failed to fetch data source" });
+    }
+  });
+
+  app.get("/api/data-sources/:id/profile", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      
+      const source = await storage.getDataSource(parseInt(req.params.id), userId);
+      if (!source) return res.status(404).json({ error: "Data source not found" });
+      
+      const rawData = source.rawData as Record<string, any>[] | null;
+      if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        return res.json({ columns: [], rowCount: 0, sampleRows: [] });
+      }
+      
+      const profile = profileData(rawData);
+      res.json(profile);
+    } catch (error) {
+      console.error("Error profiling data source:", error);
+      res.status(500).json({ error: "Failed to profile data source" });
     }
   });
 
@@ -1182,6 +1261,72 @@ Return ONLY valid JSON array, no explanation.`;
     } catch (error) {
       console.error("Error generating tooltip insight:", error);
       res.status(500).json({ error: "Failed to generate insight" });
+    }
+  });
+
+  app.post("/api/ai/nlq", isAuthenticated, async (req, res) => {
+    try {
+      const { question, dataSourceId } = req.body;
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      if (!question || !dataSourceId) return res.status(400).json({ error: "Missing question or dataSourceId" });
+
+      const source = await storage.getDataSource(dataSourceId, userId);
+      if (!source) return res.status(404).json({ error: "Data source not found" });
+
+      const rawData = source.rawData as Record<string, any>[] | null;
+      if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        return res.status(400).json({ error: "No data available in this source" });
+      }
+
+      const sampleRows = rawData.slice(0, 5);
+      const columns = Object.keys(rawData[0]);
+      const sampleStr = JSON.stringify(sampleRows, null, 2);
+
+      const systemPrompt = `You are a data visualization assistant. Given a user's natural language question about their data, generate a chart configuration.
+
+The dataset has ${rawData.length} rows with columns: ${columns.join(", ")}
+
+Sample data:
+${sampleStr}
+
+Respond with ONLY valid JSON (no markdown, no explanation) in this exact format:
+{
+  "chartType": "bar|line|area|pie|donut|scatter|funnel|radar|gauge|stat|table",
+  "title": "descriptive chart title",
+  "xAxis": "column name for x axis",
+  "yAxis": "column name for y axis",
+  "explanation": "1-sentence explanation of the insight",
+  "data": [array of data objects to render - aggregate/transform from the raw data as needed, max 20 items]
+}
+
+If the question asks for a summary/KPI, use "stat" type and include statValue and statLabel instead of axes.
+If the question asks about distribution, consider pie/donut. For trends, use line/area. For comparison, use bar.
+Transform and aggregate the data as needed to answer the question (e.g., group by, sum, average, count, top N).`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: question },
+        ],
+        max_completion_tokens: 1000,
+      });
+
+      const content = response.choices[0]?.message?.content || "{}";
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        const result = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+        if (!result.data || !result.chartType) {
+          return res.status(422).json({ error: "AI could not generate a valid chart for that question. Try rephrasing." });
+        }
+        res.json(result);
+      } catch {
+        res.status(422).json({ error: "Failed to interpret the response. Try a simpler question." });
+      }
+    } catch (error) {
+      console.error("Error in NLQ:", error);
+      res.status(500).json({ error: "Failed to process question" });
     }
   });
 

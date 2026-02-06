@@ -82,8 +82,6 @@ function AuthenticatedRouter() {
           <Route path="/studio/:id" component={DashboardStudio} />
           <Route path="/studio" component={StudioIndex} />
           <Route path="/insights" component={InsightsPage} />
-          <Route path="/reports" component={InsightsPage} />
-          <Route path="/analytics" component={InsightsPage} />
           <Route path="/organizations" component={OrganizationsPage} />
           <Route component={NotFound} />
         </Switch>

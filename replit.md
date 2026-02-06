@@ -158,6 +158,7 @@ See `DOCS.md` for complete documentation including:
 - Files: client/src/lib/onboarding-data.ts, client/src/hooks/use-onboarding.tsx, client/src/components/onboarding-*.tsx, client/src/components/welcome-flow.tsx
 
 ## Recent Changes
+- February 2026: Enterprise-grade upgrade — added data profiling/explorer, dashboard global filters, 4 new chart types (donut, gauge, funnel, radar), per-widget CSV/PNG export, and natural language query (Ask Your Data) with OpenAI
 - February 2026: UX flow overhaul - consolidated sidebar to 5 items (Home, Data, Studio, Insights, Organizations), unified Upload/Cloud/Sources into single Data page with tabs, redesigned Home as command center with stats and guided getting-started flow, improved empty states with clear next-step CTAs throughout
 - February 2026: Added comprehensive AI-powered onboarding agent with per-page tours, welcome flow, floating assistant, AI chat, and auto-completing checklist
 - February 2026: Added 5 advanced features (Aurora background, Theme selector, AI tooltips, Data table editor, Layout templates)

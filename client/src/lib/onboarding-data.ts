@@ -199,7 +199,7 @@ export const PAGE_TOURS: Record<string, PageTour> = {
       },
       {
         id: "insights-analyze",
-        target: '[data-testid="link-nav-data-sources"]',
+        target: '[data-testid="link-nav-data"]',
         title: "Analyze Data Sources",
         content: "To generate insights, first make sure you have data sources uploaded. Each source can be analyzed for patterns.",
         placement: "right",
@@ -251,7 +251,6 @@ export function getPageTour(pathname: string): PageTour | null {
   if (PAGE_TOURS[pathname]) return PAGE_TOURS[pathname];
   if (pathname.startsWith("/dashboard/")) return PAGE_TOURS["/dashboard/:id"] || null;
   if (pathname.startsWith("/studio/")) return PAGE_TOURS["/studio"] || null;
-  if (pathname === "/reports" || pathname === "/analytics") return PAGE_TOURS["/insights"] || null;
   if (pathname === "/sources" || pathname === "/upload" || pathname === "/cloud") return PAGE_TOURS["/data"] || null;
   return null;
 }

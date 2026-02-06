@@ -23,6 +23,10 @@ import {
   Palette,
   Sliders,
   ChevronRight,
+  Circle,
+  Gauge,
+  GitMerge,
+  Hexagon,
 } from "lucide-react";
 import { AISuggestions } from "@/components/ai-suggestions";
 import {
@@ -60,6 +64,10 @@ const chartTypes = [
   { id: "line", label: "Line Chart", icon: LineChart },
   { id: "area", label: "Area Chart", icon: AreaChart },
   { id: "pie", label: "Pie Chart", icon: PieChart },
+  { id: "donut", label: "Donut Chart", icon: Circle },
+  { id: "gauge", label: "Gauge / KPI", icon: Gauge },
+  { id: "funnel", label: "Funnel Chart", icon: GitMerge },
+  { id: "radar", label: "Radar Chart", icon: Hexagon },
   { id: "scatter", label: "Scatter Plot", icon: ScatterChartIcon },
   { id: "stat", label: "Stat Card", icon: Hash },
   { id: "table", label: "Data Table", icon: Table2 },
