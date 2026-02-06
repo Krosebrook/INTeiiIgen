@@ -1061,5 +1061,64 @@ Return ONLY valid JSON array, no explanation.`;
     }
   });
 
+  app.post("/api/ai/onboarding-tip", isAuthenticated, async (req, res) => {
+    try {
+      const { context, pageName, stepTitle } = req.body;
+      if (!context) return res.status(400).json({ error: "Missing context" });
+
+      const prompt = `You are an onboarding assistant for DashGen, an enterprise dashboard generator platform. The user is on the "${pageName}" page, looking at the "${stepTitle}" section. Context: ${context}
+
+Give ONE concise, friendly, actionable tip (max 2 sentences) that helps the user understand this feature and what to do next. Be specific to DashGen's capabilities. Don't use markdown.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [{ role: "user", content: prompt }],
+        max_completion_tokens: 150,
+      });
+
+      const tip = response.choices[0]?.message?.content || "Explore this feature to unlock powerful data visualization capabilities.";
+      res.json({ tip });
+    } catch (error) {
+      console.error("Error generating onboarding tip:", error);
+      res.json({ tip: "Explore this feature to unlock powerful data visualization capabilities." });
+    }
+  });
+
+  app.post("/api/ai/onboarding-chat", isAuthenticated, async (req, res) => {
+    try {
+      const { message, currentPage, pageName } = req.body;
+      if (!message) return res.status(400).json({ error: "Missing message" });
+
+      const systemPrompt = `You are DashGen's friendly onboarding assistant. DashGen is an enterprise dashboard generator platform that:
+- Accepts CSV, JSON, Excel file uploads and cloud imports (Google Drive, OneDrive, Notion)
+- Creates interactive dashboards with chart widgets (bar, line, pie, area, scatter, stat, table)
+- Provides AI-powered data analysis and insights
+- Supports multi-tenant organizations with role-based access
+- Has a visual Dashboard Studio for drag-and-drop building
+- Supports public dashboard sharing via links
+
+The user is currently on the "${pageName}" page (${currentPage}).
+
+Key pages: Dashboard (/), Upload (/upload), Cloud Storage (/cloud), Data Sources (/sources), New Dashboard (/new), Dashboard View (/dashboard/:id), AI Insights (/insights), Organizations (/organizations), Studio (/studio).
+
+Respond concisely (2-3 sentences max). Be helpful, specific, and guide them to the right feature. Don't use markdown formatting.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message },
+        ],
+        max_completion_tokens: 200,
+      });
+
+      const reply = response.choices[0]?.message?.content || "I can help you navigate DashGen. Try asking about specific features!";
+      res.json({ reply });
+    } catch (error) {
+      console.error("Error in onboarding chat:", error);
+      res.json({ reply: "I'm here to help! You can ask me about uploading data, creating dashboards, connecting cloud storage, or using AI insights." });
+    }
+  });
+
   return httpServer;
 }
