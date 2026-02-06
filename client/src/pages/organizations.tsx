@@ -390,7 +390,7 @@ export default function OrganizationsPage() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Organizations</h1>
+          <h1 className="text-2xl font-bold" data-testid="text-org-heading">Organizations</h1>
           <p className="text-muted-foreground">
             Manage your organizations and team members
           </p>

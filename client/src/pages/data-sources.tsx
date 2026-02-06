@@ -68,7 +68,7 @@ export default function DataSourcesPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Data Sources</h1>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-sources-heading">Data Sources</h1>
           <p className="text-muted-foreground">
             Manage your uploaded files and connected data sources.
           </p>

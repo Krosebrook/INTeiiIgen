@@ -45,8 +45,6 @@ export function WelcomeFlow() {
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
-  if (state.welcomed || state.dismissed) return null;
-
   const handleStart = () => {
     const goal = GOALS.find(g => g.id === selectedGoal);
     markWelcomed();
@@ -56,13 +54,15 @@ export function WelcomeFlow() {
     }
   };
 
+  if (state.welcomed || state.dismissed) return null;
+
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, pointerEvents: "none" as any }}
         data-testid="dialog-welcome-flow"
       >
         <motion.div

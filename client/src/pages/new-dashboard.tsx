@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export default function NewDashboardPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { completeChecklistItem } = useOnboarding();
   const [selectedSources, setSelectedSources] = useState<number[]>([]);
 
   const form = useForm<FormValues>({
@@ -57,6 +59,7 @@ export default function NewDashboardPage() {
       return res.json() as Promise<{ id: number }>;
     },
     onSuccess: (data) => {
+      completeChecklistItem("create-dashboard");
       queryClient.invalidateQueries({ queryKey: ["/api/dashboards"] });
       toast({
         title: "Dashboard created",
@@ -106,7 +109,7 @@ export default function NewDashboardPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Create Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight" data-testid="text-new-dashboard-heading">Create Dashboard</h1>
         <p className="text-muted-foreground">
           Set up a new dashboard and select data sources to visualize.
         </p>
@@ -186,7 +189,7 @@ export default function NewDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="section-layout-templates">
             <CardHeader>
               <CardTitle className="text-base">Data Sources</CardTitle>
               <CardDescription>

@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles, TrendingUp, AlertTriangle, Lightbulb, Loader2, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import type { AiAnalysis, DataSource } from "@shared/schema";
 
 interface AnalysisWithSource extends AiAnalysis {
@@ -9,9 +11,14 @@ interface AnalysisWithSource extends AiAnalysis {
 }
 
 export default function InsightsPage() {
+  const { completeChecklistItem } = useOnboarding();
   const { data: analyses, isLoading } = useQuery<AnalysisWithSource[]>({
     queryKey: ["/api/ai-analyses"],
   });
+
+  useEffect(() => {
+    completeChecklistItem("explore-insights");
+  }, [completeChecklistItem]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -51,7 +58,7 @@ export default function InsightsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">AI Insights</h1>
+        <h1 className="text-2xl font-bold tracking-tight" data-testid="text-insights-heading">AI Insights</h1>
         <p className="text-muted-foreground">
           AI-generated analyses and recommendations from your data sources.
         </p>

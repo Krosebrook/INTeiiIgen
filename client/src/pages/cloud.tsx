@@ -1,13 +1,20 @@
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { CloudConnector } from "@/components/cloud-connector";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function CloudPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { completeChecklistItem } = useOnboarding();
+
+  useEffect(() => {
+    completeChecklistItem("connect-cloud");
+  }, [completeChecklistItem]);
 
   const importMutation = useMutation({
     mutationFn: async ({ provider, fileId, fileName }: { provider: string; fileId: string; fileName: string }) => {
@@ -37,7 +44,7 @@ export default function CloudPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Cloud Storage</h1>
+        <h1 className="text-2xl font-bold tracking-tight" data-testid="text-cloud-heading">Cloud Storage</h1>
         <p className="text-muted-foreground">
           Connect to your cloud storage and import files directly into DashGen.
         </p>

@@ -130,7 +130,7 @@ export function CloudConnector({ onFileSelect }: CloudConnectorProps) {
               key={provider.id}
               className="cursor-pointer transition-all hover:shadow-md hover-elevate"
               onClick={() => handleProviderSelect(provider.id)}
-              data-testid={`card-provider-${provider.id}`}
+              data-testid={provider.id === "google_drive" ? "card-cloud-gdrive" : `card-provider-${provider.id}`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">

@@ -41,7 +41,7 @@ export default function DashboardPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-dashboards-heading">
             Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
           </h1>
           <p className="text-muted-foreground">

@@ -100,7 +100,7 @@ export function DashboardGrid({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">{dashboard.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-dashboard-title">{dashboard.title}</h1>
             {dashboard.isPublic && (
               <Badge variant="secondary">Public</Badge>
             )}

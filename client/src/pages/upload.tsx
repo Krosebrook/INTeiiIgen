@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AISuggestions } from "@/components/ai-suggestions";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -24,6 +25,7 @@ export default function UploadPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { completeChecklistItem } = useOnboarding();
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [hasDraft, setHasDraft] = useState(false);
@@ -174,6 +176,7 @@ export default function UploadPage() {
       setUploadStatus('success');
       setUploadProgress(100);
       clearDraft();
+      completeChecklistItem("upload-data");
       queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
       toast({
         title: "Upload successful",
@@ -240,7 +243,7 @@ export default function UploadPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" data-testid="heading-upload">Upload Data</h1>
+        <h1 className="text-2xl font-bold tracking-tight" data-testid="text-upload-heading">Upload Data</h1>
         <p className="text-muted-foreground">
           Upload files or import from URLs to create data sources for your dashboards.
         </p>
@@ -292,16 +295,18 @@ export default function UploadPage() {
         }}
       />
 
-      <FileUploadZone
-        onFilesSelected={handleFilesSelected}
-        onFilesChanged={saveDraft}
-        onUrlSubmit={handleUrlSubmit}
-        isUploading={uploadMutation.isPending || uploadStatus === 'uploading'}
-        uploadProgress={uploadProgress}
-        uploadStatus={uploadStatus}
-        acceptedTypes={[".csv", ".json", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".md", ".txt"]}
-        maxFiles={10}
-      />
+      <div data-testid="zone-file-upload">
+        <FileUploadZone
+          onFilesSelected={handleFilesSelected}
+          onFilesChanged={saveDraft}
+          onUrlSubmit={handleUrlSubmit}
+          isUploading={uploadMutation.isPending || uploadStatus === 'uploading'}
+          uploadProgress={uploadProgress}
+          uploadStatus={uploadStatus}
+          acceptedTypes={[".csv", ".json", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".md", ".txt"]}
+          maxFiles={10}
+        />
+      </div>
 
       <Card>
         <CardHeader>

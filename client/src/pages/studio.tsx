@@ -31,7 +31,7 @@ export default function StudioPage() {
       <motion.div variants={fadeInUp} transition={smoothTransition}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" data-testid="text-studio-heading">
               <Wand2 className="h-6 w-6" />
               Dashboard Studio
             </h1>

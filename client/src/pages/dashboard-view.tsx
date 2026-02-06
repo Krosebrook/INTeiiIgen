@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, ArrowLeft, Copy, Check, Wand2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export default function DashboardViewPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { completeChecklistItem } = useOnboarding();
   const [showWidgetCreator, setShowWidgetCreator] = useState(false);
   const [showVisualBuilder, setShowVisualBuilder] = useState(false);
   
@@ -79,6 +81,7 @@ export default function DashboardViewPage() {
       return res.json();
     },
     onSuccess: () => {
+      completeChecklistItem("add-widget");
       queryClient.invalidateQueries({ queryKey: ["/api/dashboards", id, "widgets"] });
       setShowWidgetCreator(false);
       setShowVisualBuilder(false);

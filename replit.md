@@ -140,7 +140,20 @@ See `DOCS.md` for complete documentation including:
 - One-click template application with auto-widget creation
 - Default data included for immediate visualization
 
+### AI Onboarding Agent
+- Comprehensive AI-powered onboarding system with per-page guided tours
+- Welcome flow modal for first-time users with goal selection
+- Floating assistant widget (bottom-right) with 3 tabs: Setup checklist, Page Tour, AI Chat
+- SVG spotlight/mask overlay with tooltip cards for step-by-step tours
+- Progress tracking persisted in localStorage (completedTours, completedChecklist, dismissed, welcomed)
+- AI-powered contextual tips and conversational chat via OpenAI (POST /api/ai/onboarding-tip, /api/ai/onboarding-chat)
+- Auto-completing checklist items on upload, dashboard creation, widget creation, insights visit, cloud visit
+- Tour steps defined for: Dashboard, Upload, Cloud, Data Sources, New Dashboard, Dashboard View, Insights, Organizations, Studio
+- Components: OnboardingProvider, OnboardingOverlay, OnboardingAssistant, WelcomeFlow
+- Files: client/src/lib/onboarding-data.ts, client/src/hooks/use-onboarding.tsx, client/src/components/onboarding-*.tsx, client/src/components/welcome-flow.tsx
+
 ## Recent Changes
+- February 2026: Added comprehensive AI-powered onboarding agent with per-page tours, welcome flow, floating assistant, AI chat, and auto-completing checklist
 - February 2026: Added 5 advanced features (Aurora background, Theme selector, AI tooltips, Data table editor, Layout templates)
 - January 2026: Added Dashboard Creator Studio (/studio, /studio/:id) for visually building and editing dashboards with widget templates
 - January 2026: Added PWA support with service worker, offline detection, lazy loading, upload progress tracking with XHR timeout protection, and draft recovery

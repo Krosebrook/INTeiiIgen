@@ -10,6 +10,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { OfflineBanner } from "@/components/offline-banner";
+import { OnboardingProvider } from "@/hooks/use-onboarding";
+import { OnboardingOverlay } from "@/components/onboarding-overlay";
+import { OnboardingAssistant } from "@/components/onboarding-assistant";
+import { WelcomeFlow } from "@/components/welcome-flow";
 import { Loader2 } from "lucide-react";
 
 // Eagerly loaded pages (critical path)
@@ -70,23 +74,28 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
 
 function AuthenticatedRouter() {
   return (
-    <AuthenticatedLayout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/sources" component={DataSources} />
-        <Route path="/upload" component={Upload} />
-        <Route path="/cloud" component={CloudPage} />
-        <Route path="/new" component={NewDashboard} />
-        <Route path="/dashboard/:id" component={DashboardView} />
-        <Route path="/studio/:id" component={DashboardStudio} />
-        <Route path="/studio" component={StudioIndex} />
-        <Route path="/insights" component={InsightsPage} />
-        <Route path="/reports" component={InsightsPage} />
-        <Route path="/analytics" component={InsightsPage} />
-        <Route path="/organizations" component={OrganizationsPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </AuthenticatedLayout>
+    <OnboardingProvider>
+      <AuthenticatedLayout>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/sources" component={DataSources} />
+          <Route path="/upload" component={Upload} />
+          <Route path="/cloud" component={CloudPage} />
+          <Route path="/new" component={NewDashboard} />
+          <Route path="/dashboard/:id" component={DashboardView} />
+          <Route path="/studio/:id" component={DashboardStudio} />
+          <Route path="/studio" component={StudioIndex} />
+          <Route path="/insights" component={InsightsPage} />
+          <Route path="/reports" component={InsightsPage} />
+          <Route path="/analytics" component={InsightsPage} />
+          <Route path="/organizations" component={OrganizationsPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </AuthenticatedLayout>
+      <WelcomeFlow />
+      <OnboardingOverlay />
+      <OnboardingAssistant />
+    </OnboardingProvider>
   );
 }
 
