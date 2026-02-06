@@ -243,8 +243,8 @@ export default function DashboardViewPage() {
             ) : (
               <div className="text-center py-8" data-testid="empty-data-sources">
                 <p className="text-muted-foreground mb-4">No data sources available. Upload data first to create widgets.</p>
-                <Link href="/upload">
-                  <Button data-testid="button-upload-data">Upload Data</Button>
+                <Link href="/data">
+                  <Button data-testid="button-upload-data">Add Data</Button>
                 </Link>
               </div>
             )}

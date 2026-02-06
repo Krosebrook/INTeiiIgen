@@ -261,9 +261,7 @@ export function OnboardingAssistant() {
                       <p className="text-xs font-medium text-muted-foreground mb-1">All Page Tours</p>
                       {[
                         { label: "Dashboard", route: "/" },
-                        { label: "Upload", route: "/upload" },
-                        { label: "Cloud Storage", route: "/cloud" },
-                        { label: "Data Sources", route: "/sources" },
+                        { label: "Data", route: "/data" },
                         { label: "New Dashboard", route: "/new" },
                         { label: "AI Insights", route: "/insights" },
                         { label: "Organizations", route: "/organizations" },

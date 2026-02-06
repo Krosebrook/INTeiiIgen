@@ -22,19 +22,18 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 ├── client/src/
 │   ├── components/          # Reusable UI components
 │   │   ├── ui/              # shadcn/ui base components
-│   │   ├── app-sidebar.tsx  # Main navigation sidebar
+│   │   ├── app-sidebar.tsx  # Main navigation sidebar (5 items: Home, Data, Studio, Insights, Organizations)
 │   │   ├── chart-widget.tsx # Chart visualization component
 │   │   ├── dashboard-grid.tsx
 │   │   ├── widget-creator.tsx
 │   │   └── file-upload-zone.tsx
 │   ├── pages/               # Route pages
-│   │   ├── dashboard.tsx    # Dashboard list
+│   │   ├── dashboard.tsx    # Home / command center with stats + dashboard list
 │   │   ├── dashboard-view.tsx
-│   │   ├── upload.tsx       # File upload
-│   │   ├── cloud.tsx        # Cloud storage connectors
-│   │   ├── data-sources.tsx
+│   │   ├── data.tsx         # Unified data page (sources + upload + cloud tabs)
+│   │   ├── new-dashboard.tsx
 │   │   ├── insights.tsx     # AI insights
-│   │   └── landing.tsx
+│   │   └── splash.tsx       # Public landing page
 │   ├── hooks/               # Custom React hooks
 │   └── lib/                 # Utilities
 ├── server/
@@ -44,6 +43,12 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 └── shared/
     └── schema.ts            # Drizzle schema + types
 ```
+
+## User Flow (Primary Path)
+1. **Add Data** → Upload files, connect cloud, or import URLs (all in /data)
+2. **Create Dashboard** → Select data sources, name dashboard, choose layout (/new)
+3. **View & Edit** → Interactive dashboard with widgets, AI tooltips (/dashboard/:id)
+4. **Get Insights** → AI-powered analysis and recommendations (/insights)
 
 ## Database Schema
 - **organizations**: Multi-tenant organization support
@@ -153,6 +158,7 @@ See `DOCS.md` for complete documentation including:
 - Files: client/src/lib/onboarding-data.ts, client/src/hooks/use-onboarding.tsx, client/src/components/onboarding-*.tsx, client/src/components/welcome-flow.tsx
 
 ## Recent Changes
+- February 2026: UX flow overhaul - consolidated sidebar to 5 items (Home, Data, Studio, Insights, Organizations), unified Upload/Cloud/Sources into single Data page with tabs, redesigned Home as command center with stats and guided getting-started flow, improved empty states with clear next-step CTAs throughout
 - February 2026: Added comprehensive AI-powered onboarding agent with per-page tours, welcome flow, floating assistant, AI chat, and auto-completing checklist
 - February 2026: Added 5 advanced features (Aurora background, Theme selector, AI tooltips, Data table editor, Layout templates)
 - January 2026: Added Dashboard Creator Studio (/studio, /studio/:id) for visually building and editing dashboards with widget templates

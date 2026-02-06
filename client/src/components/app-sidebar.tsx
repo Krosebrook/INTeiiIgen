@@ -1,16 +1,13 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard,
-  Upload,
-  Cloud,
-  Plus,
-  Settings,
-  FileText,
-  BarChart3,
+  Database,
   Sparkles,
-  FolderOpen,
   Building2,
   Wand2,
+  LogOut,
+  BarChart3,
+  Plus,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,49 +25,27 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 
-const mainNavItems = [
+const navItems = [
   {
-    title: "Dashboard",
+    title: "Home",
     url: "/",
     icon: LayoutDashboard,
   },
   {
-    title: "Data Sources",
-    url: "/sources",
-    icon: FolderOpen,
+    title: "Data",
+    url: "/data",
+    icon: Database,
+    matchPaths: ["/data", "/sources", "/upload", "/cloud"],
   },
-  {
-    title: "Upload",
-    url: "/upload",
-    icon: Upload,
-  },
-  {
-    title: "Cloud Storage",
-    url: "/cloud",
-    icon: Cloud,
-  },
-];
-
-const toolsNavItems = [
   {
     title: "Studio",
     url: "/studio",
     icon: Wand2,
   },
   {
-    title: "AI Insights",
+    title: "Insights",
     url: "/insights",
     icon: Sparkles,
-  },
-  {
-    title: "Reports",
-    url: "/reports",
-    icon: FileText,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
   },
   {
     title: "Organizations",
@@ -87,6 +62,14 @@ export function AppSidebar() {
     const first = firstName?.charAt(0) || "";
     const last = lastName?.charAt(0) || "";
     return (first + last).toUpperCase() || "U";
+  };
+
+  const isActive = (item: typeof navItems[0]) => {
+    if (item.matchPaths) {
+      return item.matchPaths.some(p => location === p || location.startsWith(p + "/"));
+    }
+    if (item.url === "/") return location === "/";
+    return location === item.url || location.startsWith(item.url + "/");
   };
 
   return (
@@ -116,37 +99,16 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
+              {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location === item.url}
+                    isActive={isActive(item)}
                   >
-                    <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(" ", "-")}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {toolsNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === item.url}
-                  >
-                    <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(" ", "-")}`}>
+                    <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase()}`}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -178,7 +140,7 @@ export function AppSidebar() {
             onClick={() => logout()}
             data-testid="button-logout"
           >
-            <Settings className="h-4 w-4" />
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </SidebarFooter>

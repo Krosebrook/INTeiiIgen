@@ -13,7 +13,7 @@ const GOALS = [
     icon: Upload,
     title: "Upload & Analyze Data",
     description: "Import spreadsheets or files and create instant visualizations",
-    route: "/upload",
+    route: "/data",
   },
   {
     id: "build-dashboard",
@@ -27,7 +27,7 @@ const GOALS = [
     icon: Cloud,
     title: "Connect Cloud Storage",
     description: "Link Google Drive, OneDrive, or Notion to import data",
-    route: "/cloud",
+    route: "/data",
   },
   {
     id: "explore",

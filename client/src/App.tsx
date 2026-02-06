@@ -16,15 +16,11 @@ import { OnboardingAssistant } from "@/components/onboarding-assistant";
 import { WelcomeFlow } from "@/components/welcome-flow";
 import { Loader2 } from "lucide-react";
 
-// Eagerly loaded pages (critical path)
 import SplashPage from "@/pages/splash";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 
-// Lazy loaded pages (non-critical, loaded on demand)
-const Upload = lazy(() => import("@/pages/upload"));
-const CloudPage = lazy(() => import("@/pages/cloud"));
-const DataSources = lazy(() => import("@/pages/data-sources"));
+const DataPage = lazy(() => import("@/pages/data"));
 const NewDashboard = lazy(() => import("@/pages/new-dashboard"));
 const DashboardView = lazy(() => import("@/pages/dashboard-view"));
 const InsightsPage = lazy(() => import("@/pages/insights"));
@@ -34,7 +30,6 @@ const DashboardStudio = lazy(() => import("@/pages/dashboard-studio"));
 const StudioIndex = lazy(() => import("@/pages/studio"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
-// Loading fallback component
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-full min-h-[200px]">
@@ -78,9 +73,10 @@ function AuthenticatedRouter() {
       <AuthenticatedLayout>
         <Switch>
           <Route path="/" component={Dashboard} />
-          <Route path="/sources" component={DataSources} />
-          <Route path="/upload" component={Upload} />
-          <Route path="/cloud" component={CloudPage} />
+          <Route path="/data" component={DataPage} />
+          <Route path="/sources" component={DataPage} />
+          <Route path="/upload" component={DataPage} />
+          <Route path="/cloud" component={DataPage} />
           <Route path="/new" component={NewDashboard} />
           <Route path="/dashboard/:id" component={DashboardView} />
           <Route path="/studio/:id" component={DashboardStudio} />
@@ -103,7 +99,6 @@ function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
 
-  // Public share route - doesn't require authentication
   if (location.startsWith("/share/")) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -121,7 +116,6 @@ function Router() {
   }
 
   if (!user) {
-    // Show auth page for /auth route, splash page for everything else
     if (location === "/auth" || location === "/signup" || location === "/login") {
       return <AuthPage />;
     }

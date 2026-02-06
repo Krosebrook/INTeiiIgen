@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, Database, ArrowRight } from "lucide-react";
 import { AISuggestions } from "@/components/ai-suggestions";
 import type { DataSource } from "@shared/schema";
 
@@ -231,9 +231,22 @@ export default function NewDashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No data sources available. Upload files first.
-                </p>
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="rounded-full bg-muted p-3 mb-3">
+                    <Database className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-sm mb-1">No data sources yet</p>
+                  <p className="text-xs text-muted-foreground mb-4 max-w-xs">
+                    Add some data first, then come back to create a dashboard from it.
+                  </p>
+                  <Link href="/data">
+                    <Button variant="outline" data-testid="button-add-data-first">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Add Data
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
               )}
             </CardContent>
           </Card>

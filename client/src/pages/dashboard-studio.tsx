@@ -393,10 +393,10 @@ export default function DashboardStudio() {
                         Create Your First Widget
                       </Button>
                     ) : (
-                      <Link href="/upload">
+                      <Link href="/data">
                         <Button data-testid="button-upload-data">
                           <Plus className="h-4 w-4 mr-2" />
-                          Upload Data First
+                          Add Data First
                         </Button>
                       </Link>
                     )}
@@ -509,8 +509,8 @@ export default function DashboardStudio() {
                 <p className="text-muted-foreground mb-4">
                   No data sources available. Upload data first to create widgets.
                 </p>
-                <Link href="/upload">
-                  <Button data-testid="button-go-upload">Upload Data</Button>
+                <Link href="/data">
+                  <Button data-testid="button-go-upload">Add Data</Button>
                 </Link>
               </div>
             )}

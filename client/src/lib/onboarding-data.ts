@@ -28,7 +28,7 @@ export const ONBOARDING_CHECKLIST: ChecklistItem[] = [
     id: "upload-data",
     label: "Upload your first data source",
     description: "Import a CSV, JSON, or Excel file to get started",
-    route: "/upload",
+    route: "/data",
     checkKey: "checklist_upload-data",
   },
   {
@@ -56,7 +56,7 @@ export const ONBOARDING_CHECKLIST: ChecklistItem[] = [
     id: "connect-cloud",
     label: "Connect cloud storage",
     description: "Link Google Drive, OneDrive, or Notion",
-    route: "/cloud",
+    route: "/data",
     checkKey: "checklist_connect-cloud",
   },
 ];
@@ -80,7 +80,7 @@ export const PAGE_TOURS: Record<string, PageTour> = {
         id: "dash-sidebar",
         target: '[data-testid="button-sidebar-toggle"]',
         title: "Navigation Sidebar",
-        content: "Use the sidebar to navigate between different sections: Data Sources, Uploads, Cloud Storage, and more.",
+        content: "Use the sidebar to navigate between sections: Home, Data, Studio, Insights, and Organizations.",
         placement: "right",
       },
       {
@@ -100,79 +100,33 @@ export const PAGE_TOURS: Record<string, PageTour> = {
       },
     ],
   },
-  "/upload": {
-    pageId: "upload",
-    pageName: "Upload Data",
-    description: "Import files to create data sources",
-    route: "/upload",
+  "/data": {
+    pageId: "data",
+    pageName: "Data",
+    description: "Manage, upload, and connect your data sources",
+    route: "/data",
     steps: [
       {
-        id: "upload-intro",
-        target: '[data-testid="text-upload-heading"]',
-        title: "Upload Your Data",
-        content: "This is where you bring in your data. DashGen supports CSV, JSON, and Excel files up to 10MB.",
+        id: "data-intro",
+        target: '[data-testid="text-data-heading"]',
+        title: "Your Data Hub",
+        content: "This is your central hub for all data. View existing sources, upload files, or connect cloud storage -- all in one place.",
         placement: "bottom",
-        aiContext: "User is on the upload page. Explain what file types work best and how data gets processed.",
+        aiContext: "User is on the data page. Explain how the tabs work and what file types are supported.",
       },
       {
-        id: "upload-zone",
-        target: '[data-testid="zone-file-upload"]',
-        title: "Drag & Drop Zone",
-        content: "Drag files here or click to browse. Your data will be automatically parsed and made ready for visualization.",
-        placement: "bottom",
-      },
-      {
-        id: "upload-sources",
-        target: '[data-testid="link-nav-data-sources"]',
-        title: "View Data Sources",
-        content: "After uploading, head to Data Sources to see all your imported data and manage it.",
-        placement: "right",
-      },
-    ],
-  },
-  "/cloud": {
-    pageId: "cloud",
-    pageName: "Cloud Storage",
-    description: "Connect external storage services",
-    route: "/cloud",
-    steps: [
-      {
-        id: "cloud-intro",
-        target: '[data-testid="text-cloud-heading"]',
-        title: "Cloud Integrations",
-        content: "Connect your cloud storage accounts to import data directly. We support Google Drive, OneDrive, and Notion.",
-        placement: "bottom",
-        aiContext: "User is exploring cloud integrations. Help them understand which service might be best for their needs.",
-      },
-      {
-        id: "cloud-providers",
-        target: '[data-testid="card-cloud-gdrive"]',
-        title: "Choose a Provider",
-        content: "Select a cloud provider to connect. Once linked, you can browse and import files directly into DashGen.",
+        id: "data-tabs",
+        target: '[data-testid="tabs-data"]',
+        title: "Switch Between Views",
+        content: "Use these tabs to view your data sources, upload new files, or connect cloud storage services.",
         placement: "bottom",
       },
-    ],
-  },
-  "/sources": {
-    pageId: "sources",
-    pageName: "Data Sources",
-    description: "Manage all imported data",
-    route: "/sources",
-    steps: [
       {
-        id: "sources-intro",
-        target: '[data-testid="text-sources-heading"]',
-        title: "Data Source Library",
-        content: "This is your data library. All uploaded files, cloud imports, and URL sources appear here.",
+        id: "data-next",
+        target: '[data-testid="button-create-dashboard-from-data"]',
+        title: "Next Step",
+        content: "Once you have data sources ready, create a dashboard to start visualizing your data.",
         placement: "bottom",
-        aiContext: "User is viewing their data sources. Help them understand what they can do with each source.",
-      },
-      {
-        id: "sources-actions",
-        target: '[data-testid="link-nav-upload"]',
-        title: "Add More Data",
-        content: "Need more data? Navigate to Upload or Cloud Storage to add new data sources for your dashboards.",
-        placement: "right",
       },
     ],
   },
@@ -298,5 +252,6 @@ export function getPageTour(pathname: string): PageTour | null {
   if (pathname.startsWith("/dashboard/")) return PAGE_TOURS["/dashboard/:id"] || null;
   if (pathname.startsWith("/studio/")) return PAGE_TOURS["/studio"] || null;
   if (pathname === "/reports" || pathname === "/analytics") return PAGE_TOURS["/insights"] || null;
+  if (pathname === "/sources" || pathname === "/upload" || pathname === "/cloud") return PAGE_TOURS["/data"] || null;
   return null;
 }
