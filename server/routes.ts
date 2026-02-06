@@ -71,6 +71,36 @@ function parseCsv(content: string): { data: Record<string, string>[]; headers: s
   return { data: rows, headers };
 }
 
+function parseTsv(content: string): { data: Record<string, string>[]; headers: string[] } | null {
+  const lines = content.split("\n").filter((l) => l.trim());
+  if (lines.length === 0) return null;
+  const headers = lines[0].split("\t").map((h) => h.trim());
+  const rows = lines.slice(1).map((line) => {
+    const values = line.split("\t").map((v) => v.trim());
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => { row[h] = values[i] || ""; });
+    return row;
+  });
+  return { data: rows, headers };
+}
+
+const TEXT_EXTENSIONS = new Set(["txt", "md", "markdown", "log", "xml", "html", "htm", "yaml", "yml", "toml", "ini", "cfg", "conf", "env", "sql", "py", "js", "ts", "jsx", "tsx", "java", "c", "cpp", "h", "rb", "go", "rs", "php", "sh", "bat", "ps1", "r", "tex", "rtf"]);
+
+function parseTextFile(content: string, fileName: string): { data: Record<string, any>[]; headers: string[] } {
+  const lines = content.split("\n");
+  const totalChars = content.length;
+  const totalWords = content.split(/\s+/).filter(Boolean).length;
+  const nonEmptyLines = lines.filter((l) => l.trim()).length;
+
+  return {
+    data: lines.filter((l) => l.trim()).map((line, i) => ({
+      line: i + 1,
+      content: line,
+    })),
+    headers: ["line", "content"],
+  };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -162,6 +192,33 @@ export async function registerRoutes(
             metadata.columns = parsed.headers.length;
             metadata.headers = parsed.headers;
           }
+        } else if (fileType === "tsv" || fileType === "tab") {
+          const content = file.buffer.toString("utf-8");
+          const parsed = parseTsv(content);
+          if (parsed) {
+            rawData = parsed.data;
+            metadata.rows = parsed.data.length;
+            metadata.columns = parsed.headers.length;
+            metadata.headers = parsed.headers;
+          }
+        } else if (TEXT_EXTENSIONS.has(fileType)) {
+          const content = file.buffer.toString("utf-8");
+          const parsed = parseTextFile(content, file.originalname);
+          rawData = parsed.data;
+          metadata.rows = parsed.data.length;
+          metadata.columns = parsed.headers.length;
+          metadata.headers = parsed.headers;
+        } else {
+          try {
+            const content = file.buffer.toString("utf-8");
+            if (content && !content.includes("\ufffd")) {
+              const parsed = parseTextFile(content, file.originalname);
+              rawData = parsed.data;
+              metadata.rows = parsed.data.length;
+              metadata.columns = parsed.headers.length;
+              metadata.headers = parsed.headers;
+            }
+          } catch {}
         }
 
         const source = await storage.createDataSource({
@@ -171,7 +228,7 @@ export async function registerRoutes(
           fileType,
           rawData,
           metadata,
-          status: rawData ? "ready" : "pending",
+          status: "ready",
         });
         createdSources.push(source);
       }
@@ -191,12 +248,76 @@ export async function registerRoutes(
       const { url } = req.body;
       if (!url) return res.status(400).json({ error: "URL is required" });
 
+      let rawData: any = null;
+      let metadata: Record<string, any> = {};
+      let status = "ready";
+      let fileType = "url";
+
+      try {
+        const response = await fetch(url, {
+          headers: { "User-Agent": "DashGen/1.0" },
+          signal: AbortSignal.timeout(15000),
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const content = await response.text();
+        metadata.size = content.length;
+        metadata.contentType = contentType;
+
+        if (contentType.includes("json") || url.endsWith(".json")) {
+          try {
+            rawData = JSON.parse(content);
+            fileType = "json";
+            if (Array.isArray(rawData)) {
+              metadata.rows = rawData.length;
+              metadata.columns = Object.keys(rawData[0] || {}).length;
+              metadata.headers = Object.keys(rawData[0] || {});
+            }
+          } catch {
+            const parsed = parseTextFile(content, url);
+            rawData = parsed.data;
+            metadata.rows = parsed.data.length;
+            metadata.columns = parsed.headers.length;
+            metadata.headers = parsed.headers;
+          }
+        } else if (contentType.includes("csv") || url.endsWith(".csv")) {
+          const parsed = parseCsv(content);
+          fileType = "csv";
+          if (parsed) {
+            rawData = parsed.data;
+            metadata.rows = parsed.data.length;
+            metadata.columns = parsed.headers.length;
+            metadata.headers = parsed.headers;
+          }
+        } else if (contentType.includes("tab-separated") || url.endsWith(".tsv")) {
+          const parsed = parseTsv(content);
+          fileType = "tsv";
+          if (parsed) {
+            rawData = parsed.data;
+            metadata.rows = parsed.data.length;
+            metadata.columns = parsed.headers.length;
+            metadata.headers = parsed.headers;
+          }
+        } else {
+          const parsed = parseTextFile(content, url);
+          rawData = parsed.data;
+          metadata.rows = parsed.data.length;
+          metadata.columns = parsed.headers.length;
+          metadata.headers = parsed.headers;
+        }
+      } catch (fetchErr) {
+        console.error("URL fetch error:", fetchErr);
+        status = "ready";
+      }
+
       const source = await storage.createDataSource({
         userId,
         name: new URL(url).hostname,
         type: "url",
         sourceUrl: url,
-        status: "pending",
+        fileType,
+        rawData,
+        metadata,
+        status,
       });
 
       res.json(source);
@@ -218,7 +339,7 @@ export async function registerRoutes(
 
       let rawData: any = null;
       let metadata: { rows?: number; columns?: number; headers?: string[] } = {};
-      let status = "pending";
+      let status = "ready";
       let actualFileType = fileType || "unknown";
 
       try {
@@ -232,21 +353,23 @@ export async function registerRoutes(
             if (parsed) {
               rawData = parsed.data;
               metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
-              status = "ready";
             }
           } else if (ext === "json") {
             rawData = JSON.parse(file.content.toString("utf-8"));
             if (Array.isArray(rawData)) {
               metadata = { rows: rawData.length, columns: Object.keys(rawData[0] || {}).length, headers: Object.keys(rawData[0] || {}) };
-              status = "ready";
             }
           } else if (ext === "xlsx" || ext === "xls") {
             const parsed = parseExcel(file.content);
             if (parsed) {
               rawData = parsed.data;
               metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
-              status = "ready";
             }
+          } else if (TEXT_EXTENSIONS.has(ext)) {
+            const content = file.content.toString("utf-8");
+            const parsed = parseTextFile(content, file.name);
+            rawData = parsed.data;
+            metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
           }
         } else if (provider === "onedrive") {
           const file = await downloadOneDriveFile(fileId);
@@ -258,21 +381,23 @@ export async function registerRoutes(
             if (parsed) {
               rawData = parsed.data;
               metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
-              status = "ready";
             }
           } else if (ext === "json") {
             rawData = JSON.parse(file.content.toString("utf-8"));
             if (Array.isArray(rawData)) {
               metadata = { rows: rawData.length, columns: Object.keys(rawData[0] || {}).length, headers: Object.keys(rawData[0] || {}) };
-              status = "ready";
             }
           } else if (ext === "xlsx" || ext === "xls") {
             const parsed = parseExcel(file.content);
             if (parsed) {
               rawData = parsed.data;
               metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
-              status = "ready";
             }
+          } else if (TEXT_EXTENSIONS.has(ext)) {
+            const content = file.content.toString("utf-8");
+            const parsed = parseTextFile(content, file.name);
+            rawData = parsed.data;
+            metadata = { rows: parsed.data.length, columns: parsed.headers.length, headers: parsed.headers };
           }
         } else if (provider === "notion") {
           const rows = await getNotionDatabaseRows(fileId);
@@ -280,7 +405,6 @@ export async function registerRoutes(
             rawData = rows;
             const headers = Object.keys(rows[0]);
             metadata = { rows: rows.length, columns: headers.length, headers };
-            status = "ready";
             actualFileType = "notion-database";
           }
         }
