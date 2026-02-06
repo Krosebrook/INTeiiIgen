@@ -198,6 +198,7 @@ export default function DashboardViewPage() {
         <DashboardGrid
           dashboard={dashboard}
           widgets={widgets || []}
+          dataSources={dataSources}
           isLoading={widgetsLoading}
           onAddWidget={() => setShowWidgetCreator(true)}
           onDeleteWidget={(widgetId) => deleteWidgetMutation.mutate(widgetId)}

@@ -12,11 +12,37 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ChartWidget } from "./chart-widget";
-import type { Widget, Dashboard } from "@shared/schema";
+import type { Widget, Dashboard, DataSource } from "@shared/schema";
+
+function resolveWidgetData(widget: Widget, dataSources?: DataSource[]): any[] {
+  const configData = (widget.config as any)?.data;
+  if (configData && Array.isArray(configData) && configData.length > 0) {
+    return configData;
+  }
+
+  if (widget.dataSourceId && dataSources) {
+    const source = dataSources.find(ds => ds.id === widget.dataSourceId);
+    if (source?.rawData) {
+      if (Array.isArray(source.rawData)) {
+        return (source.rawData as any[]).slice(0, 100);
+      } else if (typeof source.rawData === 'object' && source.rawData !== null) {
+        const rawObj = source.rawData as Record<string, unknown>;
+        const firstArrayValue = Object.values(rawObj).find(v => Array.isArray(v));
+        if (firstArrayValue && Array.isArray(firstArrayValue)) {
+          return (firstArrayValue as any[]).slice(0, 100);
+        }
+        return [rawObj];
+      }
+    }
+  }
+
+  return [];
+}
 
 interface DashboardGridProps {
   dashboard: Dashboard;
   widgets: Widget[];
+  dataSources?: DataSource[];
   isLoading?: boolean;
   onAddWidget?: () => void;
   onDeleteWidget?: (id: number) => void;
@@ -27,6 +53,7 @@ interface DashboardGridProps {
 export function DashboardGrid({
   dashboard,
   widgets,
+  dataSources,
   isLoading = false,
   onAddWidget,
   onDeleteWidget,
@@ -55,7 +82,7 @@ export function DashboardGrid({
                 id={widget.id}
                 title={widget.title}
                 type={widget.type as any}
-                data={(widget.config as any)?.data || []}
+                data={resolveWidgetData(widget, dataSources)}
                 config={widget.config as any}
                 aiInsights={widget.aiInsights || undefined}
                 onDelete={() => onDeleteWidget?.(widget.id)}
@@ -66,7 +93,7 @@ export function DashboardGrid({
         })}
       </div>
     );
-  }, [widgets, onDeleteWidget]);
+  }, [widgets, dataSources, onDeleteWidget]);
 
   return (
     <div className="space-y-6">
@@ -149,7 +176,7 @@ export function DashboardGrid({
                 id={expandedWidget.id}
                 title={expandedWidget.title}
                 type={expandedWidget.type as any}
-                data={(expandedWidget.config as any)?.data || []}
+                data={resolveWidgetData(expandedWidget, dataSources)}
                 config={expandedWidget.config as any}
               />
             )}

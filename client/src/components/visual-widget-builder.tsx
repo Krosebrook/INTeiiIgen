@@ -110,11 +110,14 @@ export function VisualWidgetBuilder({
   const handleCreate = () => {
     if (!canCreate || !selectedDataSource) return;
 
+    const widgetData = previewData.length > 0 ? previewData : [];
+
     onCreateWidget({
       type: selectedType,
       title,
       dataSourceId: parseInt(selectedDataSource),
       config: {
+        data: widgetData,
         xAxis: xAxis || undefined,
         yAxis: yAxis || undefined,
         colors: colorPresets[colorPreset].colors,

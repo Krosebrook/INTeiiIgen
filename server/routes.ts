@@ -510,11 +510,24 @@ Respond in JSON format:
       const dashboard = await storage.getDashboard(dashboardId, userId);
       if (!dashboard) return res.status(404).json({ error: "Dashboard not found" });
 
-      let widgetData: any[] = [];
-      if (dataSourceId) {
+      let widgetData: any[] = config?.data && Array.isArray(config.data) && config.data.length > 0
+        ? config.data
+        : [];
+
+      if (widgetData.length === 0 && dataSourceId) {
         const source = await storage.getDataSource(dataSourceId, userId);
-        if (source?.rawData && Array.isArray(source.rawData)) {
-          widgetData = source.rawData.slice(0, 100);
+        if (source?.rawData) {
+          if (Array.isArray(source.rawData)) {
+            widgetData = source.rawData.slice(0, 100);
+          } else if (typeof source.rawData === 'object' && source.rawData !== null) {
+            const rawObj = source.rawData as Record<string, unknown>;
+            const firstArrayValue = Object.values(rawObj).find(v => Array.isArray(v));
+            if (firstArrayValue && Array.isArray(firstArrayValue)) {
+              widgetData = (firstArrayValue as any[]).slice(0, 100);
+            } else {
+              widgetData = [rawObj];
+            }
+          }
         }
       }
 
