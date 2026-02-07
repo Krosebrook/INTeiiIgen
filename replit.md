@@ -158,6 +158,7 @@ See `DOCS.md` for complete documentation including:
 - Files: client/src/lib/onboarding-data.ts, client/src/hooks/use-onboarding.tsx, client/src/components/onboarding-*.tsx, client/src/components/welcome-flow.tsx
 
 ## Recent Changes
+- February 2026: Code quality & UX polish — fixed Express User type augmentation (server/types.ts), extracted chart-renderers.tsx and chart-export.ts from chart-widget.tsx (483→131 lines), replaced console.error with toast notifications, added ConfirmDialog for all destructive actions, search/filter on dashboard list, loading skeletons (3 variants), breadcrumb navigation on deep pages, ErrorBoundary for widget isolation
 - February 2026: Cloud connector UX overhaul — fixed provider ID routing, added real-time connection status badges, unconnected provider guidance, file type mapping for Notion databases/pages, error handling with retry, and file size display
 - February 2026: Enterprise-grade upgrade — added data profiling/explorer, dashboard global filters, 4 new chart types (donut, gauge, funnel, radar), per-widget CSV/PNG export, and natural language query (Ask Your Data) with OpenAI
 - February 2026: UX flow overhaul - consolidated sidebar to 5 items (Home, Data, Studio, Insights, Organizations), unified Upload/Cloud/Sources into single Data page with tabs, redesigned Home as command center with stats and guided getting-started flow, improved empty states with clear next-step CTAs throughout

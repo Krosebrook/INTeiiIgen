@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { FileUploadZone } from "@/components/file-upload-zone";
 import { CloudConnector } from "@/components/cloud-connector";
 import { DataSourceCard } from "@/components/data-source-card";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,10 @@ import {
   Cloud,
   FolderOpen,
   Search,
-  Loader2,
   Plus,
   ArrowRight,
 } from "lucide-react";
+import { DataSourcesSkeleton } from "@/components/page-skeletons";
 import type { DataSource } from "@shared/schema";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -48,6 +49,7 @@ export default function DataPage() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [exploringSource, setExploringSource] = useState<DataSource | null>(null);
+  const [deletingSourceId, setDeletingSourceId] = useState<number | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [draftFiles, setDraftFiles] = useState<UploadDraft["files"] | null>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
@@ -378,9 +380,7 @@ export default function DataPage() {
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-24">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <DataSourcesSkeleton />
           ) : filteredSources && filteredSources.length > 0 ? (
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -388,7 +388,7 @@ export default function DataPage() {
                   <DataSourceCard
                     key={source.id}
                     dataSource={source}
-                    onDelete={() => deleteMutation.mutate(source.id)}
+                    onDelete={() => setDeletingSourceId(source.id)}
                     onAnalyze={() => analyzeMutation.mutate(source.id)}
                     onView={() => setExploringSource(source)}
                   />
@@ -541,6 +541,21 @@ export default function DataPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deletingSourceId !== null}
+        onOpenChange={(open) => !open && setDeletingSourceId(null)}
+        title="Delete data source"
+        description="This will permanently remove this data source and any dashboards using it may lose data. This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deletingSourceId !== null) {
+            deleteMutation.mutate(deletingSourceId);
+            setDeletingSourceId(null);
+          }
+        }}
+      />
     </div>
   );
 }

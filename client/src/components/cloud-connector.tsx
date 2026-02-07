@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SiGoogledrive, SiNotion } from "react-icons/si";
+import { useToast } from "@/hooks/use-toast";
 
 interface CloudFile {
   id: string;
@@ -60,6 +61,7 @@ const providers = [
 ];
 
 export function CloudConnector({ onFileSelect }: CloudConnectorProps) {
+  const { toast } = useToast();
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [files, setFiles] = useState<CloudFile[]>([]);
@@ -96,7 +98,7 @@ export function CloudConnector({ onFileSelect }: CloudConnectorProps) {
         setFetchError("Could not load files. Please try again.");
       }
     } catch (error) {
-      console.error("Failed to fetch files:", error);
+      toast({ title: "Connection error", description: "Could not reach the cloud service. Check your connection and try again.", variant: "destructive" });
       setFetchError("Could not reach the cloud service. Check your connection and try again.");
     } finally {
       setIsLoading(false);
@@ -119,7 +121,7 @@ export function CloudConnector({ onFileSelect }: CloudConnectorProps) {
         setFetchError("Could not open this folder. Please try again.");
       }
     } catch (error) {
-      console.error("Failed to fetch folder contents:", error);
+      toast({ title: "Folder error", description: "Could not open this folder. Please try again.", variant: "destructive" });
       setFetchError("Could not reach the cloud service. Check your connection and try again.");
     } finally {
       setIsLoading(false);

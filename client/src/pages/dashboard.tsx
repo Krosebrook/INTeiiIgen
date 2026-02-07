@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   Plus,
   LayoutDashboard,
-  Loader2,
   Clock,
   BarChart3,
   Wand2,
@@ -12,10 +12,13 @@ import {
   Sparkles,
   ArrowRight,
   FolderOpen,
+  Search,
 } from "lucide-react";
+import { DashboardListSkeleton } from "@/components/page-skeletons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import type { Dashboard, DataSource } from "@shared/schema";
 
@@ -25,6 +28,7 @@ interface DashboardWithWidgets extends Dashboard {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: dashboards, isLoading: dashboardsLoading } = useQuery<DashboardWithWidgets[]>({
     queryKey: ["/api/dashboards"],
@@ -47,13 +51,18 @@ export default function DashboardPage() {
   const totalDashboards = dashboards?.length || 0;
   const publicDashboards = dashboards?.filter((d) => d.isPublic).length || 0;
 
+  const filteredDashboards = dashboards?.filter((d) =>
+    d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (d.description && d.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   const hasData = totalSources > 0;
   const hasDashboards = totalDashboards > 0;
 
   if (dashboardsLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="p-6">
+        <DashboardListSkeleton />
       </div>
     );
   }
@@ -227,8 +236,20 @@ export default function DashboardPage() {
               Your Dashboards
             </h2>
           </div>
+          {dashboards && dashboards.length > 3 && (
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search dashboards..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-dashboards"
+              />
+            </div>
+          )}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboards!.map((dashboard) => (
+            {filteredDashboards!.map((dashboard) => (
               <Link key={dashboard.id} href={`/dashboard/${dashboard.id}`}>
                 <Card
                   className="h-full cursor-pointer hover-elevate transition-all"
@@ -284,6 +305,14 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
+          {filteredDashboards && filteredDashboards.length === 0 && searchQuery && (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Search className="h-8 w-8 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No dashboards match your search.</p>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

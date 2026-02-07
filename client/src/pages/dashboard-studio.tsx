@@ -28,6 +28,7 @@ import { ChartWidget } from "@/components/chart-widget";
 import { VisualWidgetBuilder } from "@/components/visual-widget-builder";
 import { DashboardThemeSelector, type DashboardTheme, getThemeClasses } from "@/components/dashboard-theme-selector";
 import { LayoutTemplatesDialog, type LayoutTemplateConfig } from "@/components/layout-templates";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import {
   Plus,
   ArrowLeft,
@@ -217,12 +218,25 @@ export default function DashboardStudio() {
             className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
           >
             <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="ghost" size="sm" data-testid="button-back">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </Link>
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href="/" data-testid="breadcrumb-home">Home</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href={`/dashboard/${id}`} data-testid="breadcrumb-dashboard">{dashboard?.title || "Dashboard"}</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Studio</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
               <div>
                 <h1 className="text-lg font-semibold" data-testid="text-dashboard-title">
                   {dashboard.title}

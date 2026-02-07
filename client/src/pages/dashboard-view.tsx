@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { DashboardGrid } from "@/components/dashboard-grid";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { VisualWidgetBuilder } from "@/components/visual-widget-builder";
 import { KpiCards } from "@/components/kpi-cards";
 import { SmartAssistant } from "@/components/smart-assistant";
@@ -20,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, ArrowLeft, Copy, Check, Wand2 } from "lucide-react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { fadeInUp, staggerContainer, smoothTransition } from "@/lib/animations";
 import type { Dashboard, Widget, DataSource } from "@shared/schema";
@@ -37,6 +39,7 @@ export default function DashboardViewPage() {
   // Combined state for the widget creation dialog
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [deletingWidgetId, setDeletingWidgetId] = useState<number | null>(null);
 
   const { data: dashboard, isLoading: dashboardLoading } = useQuery<Dashboard>({
     queryKey: ["/api/dashboards", id],
@@ -172,12 +175,19 @@ export default function DashboardViewPage() {
       className="p-6"
     >
       <motion.div variants={fadeInUp} transition={smoothTransition} className="mb-4 flex items-center justify-between">
-        <Link href="/">
-          <Button variant="ghost" size="sm" data-testid="button-back-to-dashboards">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            All Dashboards
-          </Button>
-        </Link>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/" data-testid="breadcrumb-home">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage data-testid="breadcrumb-dashboard-name">{dashboard.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <div className="flex items-center gap-2">
           <TemplateGallery onSelectTemplate={handleTemplateSelect} />
           <Button
@@ -227,7 +237,7 @@ export default function DashboardViewPage() {
           dataSources={dataSources}
           isLoading={widgetsLoading}
           onAddWidget={() => setShowWidgetCreator(true)}
-          onDeleteWidget={(widgetId) => deleteWidgetMutation.mutate(widgetId)}
+          onDeleteWidget={(widgetId) => setDeletingWidgetId(widgetId)}
           onShareDashboard={() => setShowShareDialog(true)}
           onGenerateInsights={() => generateInsightsMutation.mutate()}
         />
@@ -299,6 +309,21 @@ export default function DashboardViewPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deletingWidgetId !== null}
+        onOpenChange={(open) => !open && setDeletingWidgetId(null)}
+        title="Delete widget"
+        description="This will permanently remove this widget from your dashboard. This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deletingWidgetId !== null) {
+            deleteWidgetMutation.mutate(deletingWidgetId);
+            setDeletingWidgetId(null);
+          }
+        }}
+      />
     </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, LayoutGrid, Sparkles, Share2, Settings, Loader2, Download } from "lucide-react";
+import { Plus, LayoutGrid, Sparkles, Share2, Settings, Download } from "lucide-react";
+import { WidgetGridSkeleton } from "@/components/page-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ChartWidget } from "./chart-widget";
+import { ErrorBoundary } from "./error-boundary";
 import { DashboardFilters, applyFilters, type DashboardFilter } from "./dashboard-filters";
 import type { Widget, Dashboard, DataSource } from "@shared/schema";
 
@@ -82,16 +84,18 @@ export function DashboardGrid({
               className={`${colSpan} ${rowSpan}`.trim() || undefined}
               data-testid={`grid-item-${widget.id}`}
             >
-              <ChartWidget
-                id={widget.id}
-                title={widget.title}
-                type={widget.type as any}
-                data={filteredData}
-                config={widget.config as any}
-                aiInsights={widget.aiInsights || undefined}
-                onDelete={() => onDeleteWidget?.(widget.id)}
-                onExpand={() => setExpandedWidget(widget)}
-              />
+              <ErrorBoundary key={`eb-${widget.id}`}>
+                <ChartWidget
+                  id={widget.id}
+                  title={widget.title}
+                  type={widget.type as any}
+                  data={filteredData}
+                  config={widget.config as any}
+                  aiInsights={widget.aiInsights || undefined}
+                  onDelete={() => onDeleteWidget?.(widget.id)}
+                  onExpand={() => setExpandedWidget(widget)}
+                />
+              </ErrorBoundary>
             </div>
           );
         })}
@@ -149,9 +153,7 @@ export function DashboardGrid({
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <WidgetGridSkeleton />
       ) : widgets.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -185,13 +187,15 @@ export function DashboardGrid({
           </DialogHeader>
           <div className="h-[60vh]">
             {expandedWidget && (
-              <ChartWidget
-                id={expandedWidget.id}
-                title={expandedWidget.title}
-                type={expandedWidget.type as any}
-                data={resolveWidgetData(expandedWidget, dataSources)}
-                config={expandedWidget.config as any}
-              />
+              <ErrorBoundary key={`eb-expanded-${expandedWidget.id}`}>
+                <ChartWidget
+                  id={expandedWidget.id}
+                  title={expandedWidget.title}
+                  type={expandedWidget.type as any}
+                  data={resolveWidgetData(expandedWidget, dataSources)}
+                  config={expandedWidget.config as any}
+                />
+              </ErrorBoundary>
             )}
           </div>
         </DialogContent>
