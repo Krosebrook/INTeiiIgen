@@ -27,11 +27,10 @@ import {
   ReferenceLine as RechartReferenceLine,
   Label,
 } from "recharts";
-import { useMemo } from "react";
 import { AIInteractiveTooltip } from "@/components/ai-interactive-tooltip";
 import type { ReferenceLine, Annotation } from "@shared/schema";
 
-export function renderChart(params: {
+interface RenderChartParams {
   type: string;
   data: any[];
   config: {
@@ -51,7 +50,9 @@ export function renderChart(params: {
   title: string;
   referenceLines?: ReferenceLine[];
   annotations?: Annotation[];
-}): JSX.Element | null {
+}
+
+export function renderChart(params: RenderChartParams): JSX.Element | null {
   const { type, data, config, colors, themeVariant, enableAITooltips, title, referenceLines = [], annotations = [] } = params;
 
   const renderTooltip = () => {
@@ -118,18 +119,12 @@ export function renderChart(params: {
     });
   };
 
-  const annotatedData = useMemo(() => {
-    if (!annotations || annotations.length === 0) return data;
-    return data.map((d, i) => {
-      const annotation = annotations.find((a) => a.dataIndex === i);
-      if (annotation) {
-        return { ...d, __annotation: annotation.label };
-      }
-      return d;
-    });
-  }, [data, annotations]);
-
-  const chartData = annotations.length > 0 ? annotatedData : data;
+  const chartData = annotations.length > 0
+    ? data.map((d, i) => {
+        const annotation = annotations.find((a) => a.dataIndex === i);
+        return annotation ? { ...d, __annotation: annotation.label } : d;
+      })
+    : data;
 
   switch (type) {
     case "bar":

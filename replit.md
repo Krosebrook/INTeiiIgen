@@ -23,25 +23,32 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 │   ├── components/          # Reusable UI components
 │   │   ├── ui/              # shadcn/ui base components
 │   │   ├── app-sidebar.tsx  # Main navigation sidebar (5 items: Home, Data, Studio, Insights, Organizations)
-│   │   ├── chart-widget.tsx # Chart visualization component
-│   │   ├── dashboard-grid.tsx
+│   │   ├── chart-widget.tsx # Chart visualization with layer tabs, export menu
+│   │   ├── chart-renderers.tsx # Extracted chart rendering logic (bar/line/area/pie/donut/gauge/funnel/radar/scatter/stat/table)
+│   │   ├── dashboard-grid.tsx  # Widget grid with filters, expand dialog
+│   │   ├── visual-widget-builder.tsx # Step-based widget creation wizard
+│   │   ├── layer-manager.tsx        # Visualization layer CRUD (add/remove/reorder)
+│   │   ├── reference-line-editor.tsx # Reference line CRUD (targets/SLAs/thresholds)
+│   │   ├── annotation-editor.tsx    # Data point annotation CRUD
+│   │   ├── clone-dashboard-dialog.tsx # Dashboard clone with data source remapping
 │   │   ├── widget-creator.tsx
 │   │   └── file-upload-zone.tsx
 │   ├── pages/               # Route pages
 │   │   ├── dashboard.tsx    # Home / command center with stats + dashboard list
-│   │   ├── dashboard-view.tsx
+│   │   ├── dashboard-view.tsx # Dashboard with clone/builder/share/NLQ
 │   │   ├── data.tsx         # Unified data page (sources + upload + cloud tabs)
 │   │   ├── new-dashboard.tsx
 │   │   ├── insights.tsx     # AI insights
 │   │   └── splash.tsx       # Public landing page
 │   ├── hooks/               # Custom React hooks
 │   └── lib/                 # Utilities
+│       └── chart-export.ts  # CSV/PNG export helpers
 ├── server/
 │   ├── routes.ts            # API endpoints
 │   ├── storage.ts           # Database operations
 │   └── db.ts                # Database connection
 └── shared/
-    └── schema.ts            # Drizzle schema + types
+    └── schema.ts            # Drizzle schema + types (incl. VisualizationLayer, ReferenceLine, Annotation)
 ```
 
 ## User Flow (Primary Path)
@@ -69,7 +76,8 @@ DashGen is an enterprise-grade dashboard generator platform that accepts any typ
 ### Dashboards
 - `GET/POST /api/dashboards` - Dashboard CRUD
 - `PATCH /api/dashboards/:id` - Update dashboard (including isPublic, shareToken)
-- `GET/POST/PATCH/DELETE /api/widgets` - Widget CRUD
+- `POST /api/dashboards/:id/clone` - Clone dashboard with widgets and optional data source remapping
+- `GET/POST/PATCH/DELETE /api/widgets` - Widget CRUD (incl. layers, referenceLines, annotations)
 - `GET /api/share/:token` - Public dashboard view (no auth)
 
 ### AI & Analytics
@@ -158,6 +166,7 @@ See `DOCS.md` for complete documentation including:
 - Files: client/src/lib/onboarding-data.ts, client/src/hooks/use-onboarding.tsx, client/src/components/onboarding-*.tsx, client/src/components/welcome-flow.tsx
 
 ## Recent Changes
+- February 2026: Dashboard cloning & annotation editor — added CloneDashboardDialog with full widget preservation and data source remapping, annotation editor for marking data points with notes, getWidgetChartProps helper to reduce dashboard-grid duplication, fixed Set iteration/stale state/hooks bugs
 - February 2026: Code quality & UX polish — fixed Express User type augmentation (server/types.ts), extracted chart-renderers.tsx and chart-export.ts from chart-widget.tsx (483→131 lines), replaced console.error with toast notifications, added ConfirmDialog for all destructive actions, search/filter on dashboard list, loading skeletons (3 variants), breadcrumb navigation on deep pages, ErrorBoundary for widget isolation
 - February 2026: Cloud connector UX overhaul — fixed provider ID routing, added real-time connection status badges, unconnected provider guidance, file type mapping for Notion databases/pages, error handling with retry, and file size display
 - February 2026: Enterprise-grade upgrade — added data profiling/explorer, dashboard global filters, 4 new chart types (donut, gauge, funnel, radar), per-widget CSV/PNG export, and natural language query (Ask Your Data) with OpenAI

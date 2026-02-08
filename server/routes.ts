@@ -681,11 +681,11 @@ Respond in JSON format:
           dataSourceId: mappedDataSourceId,
           type: widget.type,
           title: widget.title,
-          config: widgetConfig,
-          position: widget.position,
-          layers: widget.layers,
-          referenceLines: widget.referenceLines,
-          annotations: widget.annotations,
+          config: widgetConfig as Record<string, unknown>,
+          position: widget.position as Record<string, unknown>,
+          layers: (widget.layers ?? undefined) as Record<string, unknown>[] | undefined,
+          referenceLines: (widget.referenceLines ?? undefined) as Record<string, unknown>[] | undefined,
+          annotations: (widget.annotations ?? undefined) as Record<string, unknown>[] | undefined,
         });
       }
 

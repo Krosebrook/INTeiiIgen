@@ -42,6 +42,19 @@ function resolveWidgetData(widget: Widget, dataSources?: DataSource[]): any[] {
   return [];
 }
 
+function getWidgetChartProps(widget: Widget) {
+  return {
+    id: widget.id,
+    title: widget.title,
+    type: widget.type as any,
+    config: widget.config as any,
+    layers: (widget.layers as any) || undefined,
+    referenceLines: (widget.referenceLines as any) || undefined,
+    annotations: (widget.annotations as any) || undefined,
+    aiInsights: widget.aiInsights || undefined,
+  };
+}
+
 interface DashboardGridProps {
   dashboard: Dashboard;
   widgets: Widget[];
@@ -86,15 +99,8 @@ export function DashboardGrid({
             >
               <ErrorBoundary key={`eb-${widget.id}`}>
                 <ChartWidget
-                  id={widget.id}
-                  title={widget.title}
-                  type={widget.type as any}
+                  {...getWidgetChartProps(widget)}
                   data={filteredData}
-                  config={widget.config as any}
-                  layers={(widget.layers as any) || undefined}
-                  referenceLines={(widget.referenceLines as any) || undefined}
-                  annotations={(widget.annotations as any) || undefined}
-                  aiInsights={widget.aiInsights || undefined}
                   onDelete={() => onDeleteWidget?.(widget.id)}
                   onExpand={() => setExpandedWidget(widget)}
                 />
@@ -192,14 +198,8 @@ export function DashboardGrid({
             {expandedWidget && (
               <ErrorBoundary key={`eb-expanded-${expandedWidget.id}`}>
                 <ChartWidget
-                  id={expandedWidget.id}
-                  title={expandedWidget.title}
-                  type={expandedWidget.type as any}
+                  {...getWidgetChartProps(expandedWidget)}
                   data={resolveWidgetData(expandedWidget, dataSources)}
-                  config={expandedWidget.config as any}
-                  layers={(expandedWidget.layers as any) || undefined}
-                  referenceLines={(expandedWidget.referenceLines as any) || undefined}
-                  annotations={(expandedWidget.annotations as any) || undefined}
                 />
               </ErrorBoundary>
             )}

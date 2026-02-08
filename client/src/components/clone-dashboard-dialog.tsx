@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -42,14 +42,20 @@ export function CloneDashboardDialog({
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [cloneTitle, setCloneTitle] = useState(`${dashboard.title} (Copy)`);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (open) {
+      setCloneTitle(`${dashboard.title} (Copy)`);
+      setMapping({});
+    }
+  }, [open, dashboard.title]);
 
   const { data: dataSources } = useQuery<DataSource[]>({
     queryKey: ["/api/data-sources"],
   });
 
-  const usedDataSourceIds = [...new Set(widgets.filter((w) => w.dataSourceId).map((w) => w.dataSourceId!))];
-
-  const [mapping, setMapping] = useState<Record<string, string>>({});
+  const usedDataSourceIds = Array.from(new Set(widgets.filter((w) => w.dataSourceId).map((w) => w.dataSourceId!)));
 
   const cloneMutation = useMutation({
     mutationFn: async () => {
