@@ -642,6 +642,60 @@ Respond in JSON format:
     }
   });
 
+  app.post("/api/dashboards/:id/clone", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+      const sourceDashboard = await storage.getDashboard(parseInt(req.params.id), userId);
+      if (!sourceDashboard) return res.status(404).json({ error: "Dashboard not found" });
+
+      const { title, dataSourceMapping } = req.body;
+
+      const newDashboard = await storage.createDashboard({
+        userId,
+        title: title || `${sourceDashboard.title} (Copy)`,
+        description: sourceDashboard.description,
+        isPublic: false,
+        shareToken: null,
+      });
+
+      const sourceWidgets = await storage.getWidgets(sourceDashboard.id);
+
+      for (const widget of sourceWidgets) {
+        let mappedDataSourceId = widget.dataSourceId;
+        if (dataSourceMapping && widget.dataSourceId && dataSourceMapping[widget.dataSourceId.toString()]) {
+          mappedDataSourceId = parseInt(dataSourceMapping[widget.dataSourceId.toString()]);
+        }
+
+        let widgetConfig = widget.config as any;
+        if (mappedDataSourceId && mappedDataSourceId !== widget.dataSourceId) {
+          const newSource = await storage.getDataSource(mappedDataSourceId, userId);
+          if (newSource?.rawData && Array.isArray(newSource.rawData)) {
+            widgetConfig = { ...widgetConfig, data: newSource.rawData.slice(0, 100) };
+          }
+        }
+
+        await storage.createWidget({
+          dashboardId: newDashboard.id,
+          dataSourceId: mappedDataSourceId,
+          type: widget.type,
+          title: widget.title,
+          config: widgetConfig,
+          position: widget.position,
+          layers: widget.layers,
+          referenceLines: widget.referenceLines,
+          annotations: widget.annotations,
+        });
+      }
+
+      res.json(newDashboard);
+    } catch (error) {
+      console.error("Error cloning dashboard:", error);
+      res.status(500).json({ error: "Failed to clone dashboard" });
+    }
+  });
+
   app.patch("/api/dashboards/:id", isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -709,7 +763,7 @@ Respond in JSON format:
       const userId = req.user?.claims?.sub;
       if (!userId) return res.status(401).json({ error: "Unauthorized" });
       
-      const { dashboardId, type, title, config, position, dataSourceId } = req.body;
+      const { dashboardId, type, title, config, position, dataSourceId, layers, referenceLines, annotations } = req.body;
       
       const dashboard = await storage.getDashboard(dashboardId, userId);
       if (!dashboard) return res.status(404).json({ error: "Dashboard not found" });
@@ -742,6 +796,9 @@ Respond in JSON format:
         title,
         config: { ...config, data: widgetData },
         position: position || { x: 0, y: 0, w: 1, h: 1 },
+        layers: layers || null,
+        referenceLines: referenceLines || null,
+        annotations: annotations || null,
       });
 
       res.json(widget);

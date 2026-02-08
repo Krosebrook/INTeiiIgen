@@ -1,8 +1,8 @@
-import { useMemo, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Maximize2, Trash2, Sparkles, Download, Image as ImageIcon } from "lucide-react";
+import { MoreHorizontal, Maximize2, Trash2, Sparkles, Download, Image as ImageIcon, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 import { getThemeClasses, type DashboardTheme } from "@/components/dashboard-theme-selector";
 import { renderChart } from "@/components/chart-renderers";
 import { exportWidgetAsCSV, exportWidgetAsPNG } from "@/lib/chart-export";
+import type { VisualizationLayer, ReferenceLine, Annotation } from "@shared/schema";
 
 interface ChartWidgetProps {
   id: number;
@@ -30,6 +31,9 @@ interface ChartWidgetProps {
     gaugeMin?: number;
     gaugeMax?: number;
   };
+  layers?: VisualizationLayer[];
+  referenceLines?: ReferenceLine[];
+  annotations?: Annotation[];
   aiInsights?: string;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -52,6 +56,9 @@ export function ChartWidget({
   type,
   data,
   config,
+  layers,
+  referenceLines,
+  annotations,
   aiInsights,
   onEdit,
   onDelete,
@@ -63,17 +70,42 @@ export function ChartWidget({
   const themeClasses = getThemeClasses(themeVariant);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  const chartContent = useMemo(() => {
-    return renderChart({
+  const allLayers = useMemo(() => {
+    const primary: VisualizationLayer = {
+      id: "primary",
       type,
+      label: type.charAt(0).toUpperCase() + type.slice(1),
+      config: config as any,
+    };
+    if (layers && layers.length > 0) {
+      return [primary, ...layers];
+    }
+    return [primary];
+  }, [type, config, layers]);
+
+  const [activeLayerIndex, setActiveLayerIndex] = useState(0);
+
+  const safeIndex = Math.min(activeLayerIndex, allLayers.length - 1);
+  const activeLayer = allLayers[safeIndex];
+
+  const chartContent = useMemo(() => {
+    const layerConfig = safeIndex === 0 ? config : { ...config, ...(activeLayer.config || {}) };
+    const layerType = activeLayer.type;
+
+    return renderChart({
+      type: layerType,
       data,
-      config,
+      config: layerConfig,
       colors,
       themeVariant,
       enableAITooltips,
       title,
+      referenceLines: referenceLines || [],
+      annotations: annotations || [],
     });
-  }, [type, data, config, colors, themeVariant, enableAITooltips, title]);
+  }, [activeLayer, safeIndex, config, data, colors, themeVariant, enableAITooltips, title, referenceLines, annotations]);
+
+  const hasMultipleLayers = allLayers.length > 1;
 
   return (
     <Card className={`h-full flex flex-col chart-container ${themeClasses}`} data-testid={`widget-${id}`}>
@@ -91,8 +123,14 @@ export function ChartWidget({
             )}
           </div>
           <div className="flex items-center gap-1">
+            {hasMultipleLayers && (
+              <Badge variant="outline" className="text-xs gap-1 no-default-hover-elevate no-default-active-elevate">
+                <Layers className="h-3 w-3" />
+                {allLayers.length}
+              </Badge>
+            )}
             <Badge variant="secondary" className="text-xs capitalize">
-              {type}
+              {activeLayer.type}
             </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -129,6 +167,23 @@ export function ChartWidget({
             </DropdownMenu>
           </div>
         </div>
+
+        {hasMultipleLayers && (
+          <div className="flex items-center gap-1 mt-2 overflow-x-auto" data-testid={`layer-tabs-${id}`}>
+            {allLayers.map((layer, idx) => (
+              <Button
+                key={layer.id}
+                variant={idx === safeIndex ? "default" : "ghost"}
+                size="sm"
+                className={`text-xs shrink-0 toggle-elevate ${idx === safeIndex ? "toggle-elevated" : ""}`}
+                onClick={() => setActiveLayerIndex(idx)}
+                data-testid={`button-layer-tab-${id}-${idx}`}
+              >
+                {layer.label || `${layer.type.charAt(0).toUpperCase() + layer.type.slice(1)}`}
+              </Button>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 min-h-0 p-4 pt-0">
         <div ref={chartRef} className="h-full min-h-[200px]">{chartContent}</div>

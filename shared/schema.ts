@@ -79,6 +79,9 @@ export const widgets = pgTable("widgets", {
   title: text("title").notNull(),
   config: jsonb("config").notNull(), // Chart configuration: axes, colors, filters, etc.
   position: jsonb("position").notNull(), // {x, y, w, h} for grid layout
+  layers: jsonb("layers"), // Additional visualization layers [{type, config, label}]
+  referenceLines: jsonb("reference_lines"), // [{axis, value, label, color, style}]
+  annotations: jsonb("annotations"), // [{dataIndex, label, description}]
   aiInsights: text("ai_insights"), // AI-generated insights about the data
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
@@ -215,6 +218,35 @@ export const widgetConfigSchema = z.object({
 });
 
 export type WidgetConfig = z.infer<typeof widgetConfigSchema>;
+
+export const visualizationLayerSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  label: z.string().optional(),
+  config: widgetConfigSchema.optional(),
+});
+
+export type VisualizationLayer = z.infer<typeof visualizationLayerSchema>;
+
+export const referenceLineSchema = z.object({
+  id: z.string(),
+  axis: z.enum(["x", "y"]),
+  value: z.union([z.string(), z.number()]),
+  label: z.string().optional(),
+  color: z.string().optional(),
+  style: z.enum(["solid", "dashed", "dotted"]).optional(),
+});
+
+export type ReferenceLine = z.infer<typeof referenceLineSchema>;
+
+export const annotationSchema = z.object({
+  id: z.string(),
+  dataIndex: z.number(),
+  label: z.string(),
+  description: z.string().optional(),
+});
+
+export type Annotation = z.infer<typeof annotationSchema>;
 
 // Position schema for grid layout
 export const positionSchema = z.object({

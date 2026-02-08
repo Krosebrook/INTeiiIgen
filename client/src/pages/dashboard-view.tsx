@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { apiRequest } from "@/lib/queryClient";
+import { CloneDashboardDialog } from "@/components/clone-dashboard-dialog";
 import { Loader2, ArrowLeft, Copy, Check, Wand2 } from "lucide-react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,8 @@ export default function DashboardViewPage() {
   const { completeChecklistItem } = useOnboarding();
   const [showWidgetCreator, setShowWidgetCreator] = useState(false);
   const [showVisualBuilder, setShowVisualBuilder] = useState(false);
+  const [showCloneDialog, setShowCloneDialog] = useState(false);
   
-  // Combined state for the widget creation dialog
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [deletingWidgetId, setDeletingWidgetId] = useState<number | null>(null);
@@ -78,9 +79,15 @@ export default function DashboardViewPage() {
   const createWidgetMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest("POST", "/api/widgets", {
-        ...data,
         dashboardId: parseInt(id!),
+        type: data.type,
+        title: data.title,
+        dataSourceId: data.dataSourceId,
+        config: data.config,
         position: { x: 0, y: 0, w: 1, h: 1 },
+        layers: data.layers || null,
+        referenceLines: data.referenceLines || null,
+        annotations: data.annotations || null,
       });
       return res.json();
     },
@@ -190,6 +197,15 @@ export default function DashboardViewPage() {
         </Breadcrumb>
         <div className="flex items-center gap-2">
           <TemplateGallery onSelectTemplate={handleTemplateSelect} />
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setShowCloneDialog(true)}
+            data-testid="button-clone-dashboard"
+          >
+            <Copy className="h-4 w-4" />
+            Clone
+          </Button>
           <Button
             variant="outline"
             className="gap-2"
@@ -324,6 +340,15 @@ export default function DashboardViewPage() {
           }
         }}
       />
+
+      {dashboard && (
+        <CloneDashboardDialog
+          open={showCloneDialog}
+          onOpenChange={setShowCloneDialog}
+          dashboard={dashboard}
+          widgets={widgets || []}
+        />
+      )}
     </motion.div>
   );
 }

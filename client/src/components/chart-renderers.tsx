@@ -24,8 +24,12 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  ReferenceLine as RechartReferenceLine,
+  Label,
 } from "recharts";
+import { useMemo } from "react";
 import { AIInteractiveTooltip } from "@/components/ai-interactive-tooltip";
+import type { ReferenceLine, Annotation } from "@shared/schema";
 
 export function renderChart(params: {
   type: string;
@@ -45,8 +49,10 @@ export function renderChart(params: {
   themeVariant: string;
   enableAITooltips: boolean;
   title: string;
+  referenceLines?: ReferenceLine[];
+  annotations?: Annotation[];
 }): JSX.Element | null {
-  const { type, data, config, colors, themeVariant, enableAITooltips, title } = params;
+  const { type, data, config, colors, themeVariant, enableAITooltips, title, referenceLines = [], annotations = [] } = params;
 
   const renderTooltip = () => {
     if (enableAITooltips) {
@@ -87,11 +93,49 @@ export function renderChart(params: {
   const yKey = config.yAxis || Object.keys(data[0])[1];
   const gridColor = themeVariant === 'dark' ? '#334155' : undefined;
 
+  const renderReferenceLines = () => {
+    if (!referenceLines || referenceLines.length === 0) return null;
+    return referenceLines.map((rl) => {
+      const dashMap: Record<string, string> = {
+        solid: "0",
+        dashed: "6 4",
+        dotted: "2 2",
+      };
+      return (
+        <RechartReferenceLine
+          key={rl.id}
+          x={rl.axis === "x" ? rl.value : undefined}
+          y={rl.axis === "y" ? rl.value : undefined}
+          stroke={rl.color || "hsl(var(--destructive))"}
+          strokeDasharray={dashMap[rl.style || "dashed"]}
+          strokeWidth={1.5}
+        >
+          {rl.label && (
+            <Label value={rl.label} position="insideTopRight" fill={rl.color || "hsl(var(--destructive))"} fontSize={11} />
+          )}
+        </RechartReferenceLine>
+      );
+    });
+  };
+
+  const annotatedData = useMemo(() => {
+    if (!annotations || annotations.length === 0) return data;
+    return data.map((d, i) => {
+      const annotation = annotations.find((a) => a.dataIndex === i);
+      if (annotation) {
+        return { ...d, __annotation: annotation.label };
+      }
+      return d;
+    });
+  }, [data, annotations]);
+
+  const chartData = annotations.length > 0 ? annotatedData : data;
+
   switch (type) {
     case "bar":
       return (
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             {config.showGrid !== false && (
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
             )}
@@ -99,7 +143,12 @@ export function renderChart(params: {
             <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
             {renderTooltip()}
             {config.showLegend && <Legend />}
-            <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]} />
+            {renderReferenceLines()}
+            <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]}>
+              {annotations.length > 0 && (
+                <LabelList dataKey="__annotation" position="top" fill="hsl(var(--foreground))" fontSize={10} />
+              )}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       );
@@ -107,7 +156,7 @@ export function renderChart(params: {
     case "line":
       return (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             {config.showGrid !== false && (
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
             )}
@@ -115,12 +164,27 @@ export function renderChart(params: {
             <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
             {renderTooltip()}
             {config.showLegend && <Legend />}
+            {renderReferenceLines()}
             <Line
               type="monotone"
               dataKey={yKey}
               stroke={colors[0]}
               strokeWidth={2}
-              dot={{ fill: colors[0], strokeWidth: 2 }}
+              dot={(props: any) => {
+                const { cx, cy, index, payload } = props;
+                const isAnnotated = payload?.__annotation;
+                return (
+                  <circle
+                    key={`dot-${index}`}
+                    cx={cx}
+                    cy={cy}
+                    r={isAnnotated ? 6 : 3}
+                    fill={isAnnotated ? "hsl(var(--primary))" : colors[0]}
+                    stroke={isAnnotated ? "hsl(var(--background))" : colors[0]}
+                    strokeWidth={isAnnotated ? 2 : 1}
+                  />
+                );
+              }}
               activeDot={{ r: 6 }}
             />
           </LineChart>
@@ -130,7 +194,7 @@ export function renderChart(params: {
     case "area":
       return (
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             {config.showGrid !== false && (
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" stroke={gridColor} />
             )}
@@ -138,6 +202,7 @@ export function renderChart(params: {
             <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
             {renderTooltip()}
             {config.showLegend && <Legend />}
+            {renderReferenceLines()}
             <Area
               type="monotone"
               dataKey={yKey}

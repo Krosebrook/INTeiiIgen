@@ -46,7 +46,10 @@ import {
   Cell,
 } from "recharts";
 import { fadeInUp, staggerContainer, smoothTransition } from "@/lib/animations";
-import type { DataSource } from "@shared/schema";
+import { LayerManager } from "@/components/layer-manager";
+import { ReferenceLineEditor } from "@/components/reference-line-editor";
+import { AnnotationEditor } from "@/components/annotation-editor";
+import type { DataSource, VisualizationLayer, ReferenceLine, Annotation } from "@shared/schema";
 
 interface VisualWidgetBuilderProps {
   dataSources: DataSource[];
@@ -55,6 +58,9 @@ interface VisualWidgetBuilderProps {
     title: string;
     dataSourceId: number;
     config: any;
+    layers?: VisualizationLayer[];
+    referenceLines?: ReferenceLine[];
+    annotations?: Annotation[];
   }) => void;
   onCancel: () => void;
 }
@@ -95,6 +101,9 @@ export function VisualWidgetBuilder({
   const [colorPreset, setColorPreset] = useState(0);
   const [showLegend, setShowLegend] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
+  const [extraLayers, setExtraLayers] = useState<VisualizationLayer[]>([]);
+  const [refLines, setRefLines] = useState<ReferenceLine[]>([]);
+  const [widgetAnnotations, setWidgetAnnotations] = useState<Annotation[]>([]);
 
   const selectedSource = useMemo(() => {
     return dataSources.find((ds) => ds.id.toString() === selectedDataSource);
@@ -132,6 +141,9 @@ export function VisualWidgetBuilder({
         showLegend,
         showGrid,
       },
+      layers: extraLayers.length > 0 ? extraLayers : undefined,
+      referenceLines: refLines.length > 0 ? refLines : undefined,
+      annotations: widgetAnnotations.length > 0 ? widgetAnnotations : undefined,
     });
   };
 
@@ -399,7 +411,7 @@ export function VisualWidgetBuilder({
               className="h-full"
             >
               <div className="grid grid-cols-2 gap-6 h-full">
-                <div className="space-y-4">
+                <div className="space-y-4 overflow-y-auto max-h-[50vh] pr-2">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Palette className="h-4 w-4" />
@@ -457,6 +469,35 @@ export function VisualWidgetBuilder({
                       />
                     </div>
                   </div>
+
+                  <div className="border-t pt-4">
+                    <LayerManager
+                      layers={[{ id: "primary", type: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) }, ...extraLayers]}
+                      onChange={(updated) => {
+                        setExtraLayers(updated.slice(1));
+                      }}
+                      primaryType={selectedType}
+                    />
+                  </div>
+
+                  {["bar", "line", "area", "scatter"].includes(selectedType) && (
+                    <div className="border-t pt-4">
+                      <ReferenceLineEditor
+                        referenceLines={refLines}
+                        onChange={setRefLines}
+                      />
+                    </div>
+                  )}
+
+                  {["bar", "line", "area"].includes(selectedType) && previewData.length > 0 && (
+                    <div className="border-t pt-4">
+                      <AnnotationEditor
+                        annotations={widgetAnnotations}
+                        onChange={setWidgetAnnotations}
+                        dataLength={previewData.length}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="border rounded-lg p-4 bg-muted/30">

@@ -91,6 +91,9 @@ export function DashboardGrid({
                   type={widget.type as any}
                   data={filteredData}
                   config={widget.config as any}
+                  layers={(widget.layers as any) || undefined}
+                  referenceLines={(widget.referenceLines as any) || undefined}
+                  annotations={(widget.annotations as any) || undefined}
                   aiInsights={widget.aiInsights || undefined}
                   onDelete={() => onDeleteWidget?.(widget.id)}
                   onExpand={() => setExpandedWidget(widget)}
@@ -194,6 +197,9 @@ export function DashboardGrid({
                   type={expandedWidget.type as any}
                   data={resolveWidgetData(expandedWidget, dataSources)}
                   config={expandedWidget.config as any}
+                  layers={(expandedWidget.layers as any) || undefined}
+                  referenceLines={(expandedWidget.referenceLines as any) || undefined}
+                  annotations={(expandedWidget.annotations as any) || undefined}
                 />
               </ErrorBoundary>
             )}
