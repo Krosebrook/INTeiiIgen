@@ -1,0 +1,332 @@
+1) Fix the graph limitation: from “choose one” to “compose many”
+What’s wrong with the current model
+
+A single-select “graph style” widget implies:
+
+One visualization per dataset
+
+One interpretation per metric
+
+Constant re-creation for comparisons
+
+That’s backwards for real decision-making.
+
+Recommended model: Visualization Stack
+
+Instead of “Graph Type”, introduce a Visualization Stack where users can add unlimited visual layers tied to the same data source.
+
+Each widget should support:
+
+Multiple chart renderers attached to the same query
+
+Independent config per renderer
+
+Shared filters and time ranges
+
+Example:
+
+Data Source: Revenue
+├─ Line Chart (daily trend)
+├─ Bar Chart (weekly aggregation)
+├─ Table (raw rows)
+├─ KPI Tile (MTD total)
+
+Implementation approaches
+
+Option A – Multi-select visualization panel (recommended)
+
+Checkbox list of chart types
+
+“Add another visualization” CTA
+
+Drag to reorder visual priority
+
+Option B – Chart Composer Canvas
+
+Canvas where users drag visual blocks
+
+Each block references the same query ID
+
+Power-user friendly, slightly higher complexity
+
+Option C – Preset + Extend
+
+Start with one chart
+
+“+ Add another view of this data”
+
+Lowest friction, easiest migration
+
+Recommendation: Option A now, Option B later.
+
+2) Core capabilities every internal dashboard generator should have
+A) Data & Query Layer (this is non-negotiable)
+
+If this layer is weak, everything else collapses.
+
+Must-haves:
+
+SQL + no-code query builder
+
+Saved queries as reusable assets
+
+Parameterized queries (date, user, department)
+
+Query versioning + rollback
+
+Query ownership and permissions
+
+Nice-to-have:
+
+Query linting and cost estimation
+
+Query result caching with TTL
+
+Materialized views for heavy dashboards
+
+B) Visualization System (beyond basic charts)
+
+Go past line/bar/pie or people will abandon it.
+
+Include:
+
+Line, bar, stacked bar, area
+
+Table (sortable, filterable)
+
+KPI tiles (with thresholds)
+
+Heatmaps
+
+Funnel charts
+
+Cohort tables
+
+Distribution / histogram
+
+Change-over-time deltas
+
+Anomaly overlays
+
+Advanced:
+
+Dual-axis charts
+
+Reference lines (targets, SLAs)
+
+Conditional formatting rules
+
+Inline annotations (“this spike was Black Friday”)
+
+C) Layout & Composition
+
+Dashboards live or die on layout.
+
+Features:
+
+Grid + freeform layout toggle
+
+Snap-to-grid with manual override
+
+Section headers and dividers
+
+Collapsible sections
+
+Responsive breakpoints (desktop / wallboard)
+
+Power features:
+
+Dashboard-within-dashboard embeds
+
+Reusable layout templates
+
+“Compare mode” (side-by-side dashboards)
+
+D) Filters & Interactivity
+
+This is where internal tools usually fail.
+
+Required:
+
+Global filters (date, org, region, user)
+
+Widget-level overrides
+
+Filter syncing across widgets
+
+URL-encoded filter state (shareable)
+
+Advanced:
+
+Cascading filters (team → user)
+
+Conditional filters (only show when relevant)
+
+Interactive drill-downs (click bar → open detail dashboard)
+
+E) Permissions & Governance (critical for company-wide use)
+
+Internal dashboards fail without guardrails.
+
+Must-have:
+
+Role-based access (viewer, editor, owner)
+
+Row-level security awareness
+
+Read-only vs interactive modes
+
+Audit logs (who changed what, when)
+
+Advanced:
+
+Data masking rules
+
+Approval workflows for shared dashboards
+
+“Certified dashboard” badges
+
+Deprecation warnings for stale dashboards
+
+F) Collaboration & Knowledge Capture
+
+Dashboards are communication tools, not just charts.
+
+Include:
+
+Comments per widget
+
+Mentions (@team, @finance)
+
+Change history with diffs
+
+Embedded documentation blocks
+
+Advanced:
+
+Decision logs (“This dashboard informs X decision”)
+
+Slack/Teams notifications on threshold breaches
+
+Snapshot sharing (“Here’s how it looked last Monday”)
+
+G) Automation & Intelligence (where this becomes a force multiplier)
+
+Baseline:
+
+Scheduled refresh
+
+Scheduled exports (PDF, CSV)
+
+Threshold alerts
+
+AI-assisted (high ROI):
+
+“Explain this chart” natural language summaries
+
+Auto-suggested visualizations per dataset
+
+Anomaly detection suggestions
+
+“What changed since last week?” insights
+
+Natural-language dashboard generation
+
+H) Performance & Reliability
+
+Internal users will forgive fewer bugs than external users.
+
+Must-have:
+
+Widget-level loading states
+
+Partial render on slow queries
+
+Query timeouts with user feedback
+
+Client-side memoization
+
+Advanced:
+
+Pre-computed dashboards
+
+Usage analytics (what’s actually used)
+
+Automatic stale-data warnings
+
+3) Features most teams forget (but shouldn’t)
+
+Metric definitions registry (single source of truth)
+
+Semantic layer (business names over raw columns)
+
+Dark mode (wallboards matter)
+
+Export to slides (exec workflows)
+
+Mobile read-only mode
+
+Dashboard cloning with data remapping
+
+4) Implementation considerations
+
+Model widgets as containers, not charts
+
+Decouple query execution from visualization rendering
+
+Treat dashboards as code-like assets (IDs, versions, ownership)
+
+Design for “80% simple, 20% power user”
+
+Assume dashboards will outlive their creators
+
+5) Performance & security notes
+
+Cache query results, not rendered charts
+
+Enforce RLS at the data layer, not the UI
+
+Log dashboard access for compliance
+
+Prevent N+1 query patterns from widget duplication
+
+Guard against “runaway filters” that cause full-table scans
+
+6) Recommended next steps
+
+Replace single-select graph control with Visualization Stack
+
+Introduce saved queries as first-class objects
+
+Add global filters + URL state
+
+Implement role-based permissions early
+
+Ship with a small but strong visualization set, then expand
+
+Add AI explanations only after data correctness is solid
+
+If you want, next I can:
+
+Design the widget schema (JSON / TS types)
+
+Sketch the UI flow for multi-chart widgets
+
+Propose a phased rollout plan (MVP → power user)
+
+Map this cleanly into your existing internal stack
+
+CLAIMS CHECK
+
+Claim: “Users need unlimited chart styles per widget.”
+✔ True for analytical dashboards; limited widgets force duplication and reduce insight density.
+
+Counterexample:
+Simple exec dashboards may prefer one chart per widget for clarity.
+→ Solution: default to one, allow many.
+
+Potential contradiction:
+Too many visualizations can overwhelm users.
+→ Mitigation: collapse views, tabs, or progressive disclosure.
+
+Bottom line: don’t restrict capability; guide usage.
